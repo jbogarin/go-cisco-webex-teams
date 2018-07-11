@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/go-querystring/query"
+	"github.com/peterhellberg/link"
 	"gopkg.in/resty.v1"
 )
 
@@ -42,6 +43,36 @@ type Message struct {
 // Messages is the List of Messages
 type Messages struct {
 	Items []Message `json:"items,omitempty"`
+}
+
+// AddMessage is used to append a message to a slice of messages
+func (messages *Messages) AddMessage(item Message) []Message {
+	messages.Items = append(messages.Items, item)
+	return messages.Items
+}
+
+func messageLoop(linkHeader string) *Messages {
+	items := &Messages{}
+
+	for _, l := range link.Parse(linkHeader) {
+		if l.Rel == "next" {
+
+			response, err := RestyClient.R().
+				SetResult(&Messages{}).
+				Get(l.URI)
+
+			if err != nil {
+				fmt.Println("Error")
+			}
+			items = response.Result().(*Messages)
+			messages := messageLoop(response.Header().Get("Link"))
+			for _, message := range messages.Items {
+				items.AddMessage(message)
+			}
+		}
+	}
+
+	return items
 }
 
 // CreateMessage Post a plain text or rich text message, and optionally, a media content attachment, to a room.
@@ -152,6 +183,11 @@ func (s *MessagesService) ListMessages(queryParams *ListMessagesQueryParams) (*M
 	}
 
 	result := response.Result().(*Messages)
+	items := messageLoop(response.Header().Get("Link"))
+
+	for _, message := range items.Items {
+		result.AddMessage(message)
+	}
 	return result, response, err
 
 }

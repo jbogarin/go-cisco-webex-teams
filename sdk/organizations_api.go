@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/go-querystring/query"
+	"github.com/peterhellberg/link"
 	"gopkg.in/resty.v1"
 )
 
@@ -22,6 +23,36 @@ type Organization struct {
 // Organizations is the List of Organizations
 type Organizations struct {
 	Items []Organization `json:"items,omitempty"`
+}
+
+// AddOrganization is used to append a organization to a slice of organizations
+func (organizations *Organizations) AddOrganization(item Organization) []Organization {
+	organizations.Items = append(organizations.Items, item)
+	return organizations.Items
+}
+
+func organizationLoop(linkHeader string) *Organizations {
+	items := &Organizations{}
+
+	for _, l := range link.Parse(linkHeader) {
+		if l.Rel == "next" {
+
+			response, err := RestyClient.R().
+				SetResult(&Organizations{}).
+				Get(l.URI)
+
+			if err != nil {
+				fmt.Println("Error")
+			}
+			items = response.Result().(*Organizations)
+			organizations := organizationLoop(response.Header().Get("Link"))
+			for _, organization := range organizations.Items {
+				items.AddOrganization(organization)
+			}
+		}
+	}
+
+	return items
 }
 
 // GetOrganization Shows details for an organization, by ID.
@@ -75,6 +106,11 @@ func (s *OrganizationsService) ListOrganizations(queryParams *ListOrganizationsQ
 	}
 
 	result := response.Result().(*Organizations)
+	items := organizationLoop(response.Header().Get("Link"))
+
+	for _, organization := range items.Items {
+		result.AddOrganization(organization)
+	}
 	return result, response, err
 
 }

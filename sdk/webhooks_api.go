@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/go-querystring/query"
+	"github.com/peterhellberg/link"
 	"gopkg.in/resty.v1"
 )
 
@@ -48,6 +49,36 @@ type Webhook struct {
 // Webhooks is the List of Webhooks
 type Webhooks struct {
 	Items []Webhook `json:"items,omitempty"`
+}
+
+// AddWebhooks is used to append a webhook to a slice of webhooks
+func (webhooks *Webhooks) AddWebhook(item Webhook) []Webhook {
+	webhooks.Items = append(webhooks.Items, item)
+	return webhooks.Items
+}
+
+func webhookLoop(linkHeader string) *Webhooks {
+	items := &Webhooks{}
+
+	for _, l := range link.Parse(linkHeader) {
+		if l.Rel == "next" {
+
+			response, err := RestyClient.R().
+				SetResult(&Webhooks{}).
+				Get(l.URI)
+
+			if err != nil {
+				fmt.Println("Error")
+			}
+			items = response.Result().(*Webhooks)
+			webhooks := webhookLoop(response.Header().Get("Link"))
+			for _, webhook := range webhooks.Items {
+				items.AddWebhook(webhook)
+			}
+		}
+	}
+
+	return items
 }
 
 // CreateWebhook Creates a webhook.
@@ -147,6 +178,12 @@ func (s *WebhooksService) ListWebhooks(queryParams *ListWebhooksQueryParams) (*W
 	}
 
 	result := response.Result().(*Webhooks)
+	items := webhookLoop(response.Header().Get("Link"))
+
+	for _, webhook := range items.Items {
+		result.AddWebhook(webhook)
+	}
+
 	return result, response, err
 
 }

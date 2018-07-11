@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/google/go-querystring/query"
+	"github.com/peterhellberg/link"
 	"gopkg.in/resty.v1"
 )
 
@@ -20,6 +21,36 @@ type Role struct {
 // Roles is the List of Roles
 type Roles struct {
 	Items []Role `json:"items,omitempty"`
+}
+
+// AddRole is used to append a role to a slice of roles
+func (roles *Roles) AddRole(item Role) []Role {
+	roles.Items = append(roles.Items, item)
+	return roles.Items
+}
+
+func roleLoop(linkHeader string) *Roles {
+	items := &Roles{}
+
+	for _, l := range link.Parse(linkHeader) {
+		if l.Rel == "next" {
+
+			response, err := RestyClient.R().
+				SetResult(&Roles{}).
+				Get(l.URI)
+
+			if err != nil {
+				fmt.Println("Error")
+			}
+			items = response.Result().(*Roles)
+			roles := roleLoop(response.Header().Get("Link"))
+			for _, role := range roles.Items {
+				items.AddRole(role)
+			}
+		}
+	}
+
+	return items
 }
 
 // GetRole Shows details for a role, by ID.
@@ -73,6 +104,11 @@ func (s *RolesService) ListRoles(queryParams *RolesListQueryParams) (*Roles, *re
 	}
 
 	result := response.Result().(*Roles)
+	items := roleLoop(response.Header().Get("Link"))
+
+	for _, role := range items.Items {
+		result.AddRole(role)
+	}
 	return result, response, err
 
 }

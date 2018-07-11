@@ -51,7 +51,6 @@ func main() {
 
 	// GET messages
 	messageQueryParams := &webexteams.ListMessagesQueryParams{
-		Max:    5,
 		RoomID: myRoomID,
 	}
 

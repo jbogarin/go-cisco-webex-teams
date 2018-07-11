@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/go-querystring/query"
+	"github.com/peterhellberg/link"
 	"gopkg.in/resty.v1"
 )
 
@@ -39,6 +40,36 @@ type TeamMembership struct {
 // TeamMemberships is the List of Team Memberships
 type TeamMemberships struct {
 	Items []TeamMembership `json:"items,omitempty"`
+}
+
+// AddTeamMembership is used to append a room to a slice of rooms
+func (teamMembership *TeamMemberships) AddTeamMembership(item TeamMembership) []TeamMembership {
+	teamMembership.Items = append(teamMembership.Items, item)
+	return teamMembership.Items
+}
+
+func teamMembershipLoop(linkHeader string) *TeamMemberships {
+	items := &TeamMemberships{}
+
+	for _, l := range link.Parse(linkHeader) {
+		if l.Rel == "next" {
+
+			response, err := RestyClient.R().
+				SetResult(&TeamMemberships{}).
+				Get(l.URI)
+
+			if err != nil {
+				fmt.Println("Error")
+			}
+			items = response.Result().(*TeamMemberships)
+			teamMemberships := teamMembershipLoop(response.Header().Get("Link"))
+			for _, teamMembership := range teamMemberships.Items {
+				items.AddTeamMembership(teamMembership)
+			}
+		}
+	}
+
+	return items
 }
 
 // CreateTeamMembership Add someone to a team by Person ID or email address; optionally making them a moderator.
@@ -142,6 +173,11 @@ func (s *TeamMembershipsService) ListTeamMemberhips(queryParams *ListTeamMemberh
 	}
 
 	result := response.Result().(*TeamMemberships)
+	items := teamMembershipLoop(response.Header().Get("Link"))
+
+	for _, teamMembership := range items.Items {
+		result.AddTeamMembership(teamMembership)
+	}
 	return result, response, err
 
 }

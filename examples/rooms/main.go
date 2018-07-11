@@ -24,6 +24,7 @@ func main() {
 	*/
 
 	// POST rooms
+
 	roomRequest := &webexteams.RoomCreateRequest{
 		Title: "Go Test Room",
 	}
@@ -37,8 +38,8 @@ func main() {
 
 	// GET rooms
 	roomsQueryParams := &webexteams.ListRoomsQueryParams{
-		Max:      2,
-		RoomType: "group",
+		Max:    10,
+		TeamID: "",
 	}
 
 	rooms, _, err := Client.Rooms.ListRooms(roomsQueryParams)
@@ -50,6 +51,7 @@ func main() {
 	}
 
 	// GET rooms/<id>
+
 	room, _, err := Client.Rooms.GetRoom(newRoom.ID)
 	if err != nil {
 		log.Fatal(err)
@@ -69,10 +71,12 @@ func main() {
 	fmt.Println("PUT:", updatedRoom.ID, updatedRoom.Title, updatedRoom.IsLocked, updatedRoom.Created)
 
 	// DELETE
+
 	resp, err := Client.Rooms.DeleteRoom(newRoom.ID)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	fmt.Println("DELETE:", resp.StatusCode())
+
 }

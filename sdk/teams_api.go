@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/go-querystring/query"
+	"github.com/peterhellberg/link"
 	"gopkg.in/resty.v1"
 )
 
@@ -33,6 +34,36 @@ type TeamUpdateRequest struct {
 // TeamCreateRequest is the Team Create Request Parameters
 type TeamCreateRequest struct {
 	Name string `json:"name,omitempty"` // Team name.
+}
+
+// AddTeam is used to append a team to a slice of teams
+func (teams *Teams) AddTeam(item Team) []Team {
+	teams.Items = append(teams.Items, item)
+	return teams.Items
+}
+
+func teamLoop(linkHeader string) *Teams {
+	items := &Teams{}
+
+	for _, l := range link.Parse(linkHeader) {
+		if l.Rel == "next" {
+
+			response, err := RestyClient.R().
+				SetResult(&Teams{}).
+				Get(l.URI)
+
+			if err != nil {
+				fmt.Println("Error")
+			}
+			items = response.Result().(*Teams)
+			teams := teamLoop(response.Header().Get("Link"))
+			for _, team := range teams.Items {
+				items.AddTeam(team)
+			}
+		}
+	}
+
+	return items
 }
 
 // CreateTeam Creates a team.
@@ -134,6 +165,11 @@ func (s *TeamsService) ListTeams(queryParams *ListTeamsQueryParams) (*Teams, *re
 	}
 
 	result := response.Result().(*Teams)
+	items := teamLoop(response.Header().Get("Link"))
+
+	for _, team := range items.Items {
+		result.AddTeam(team)
+	}
 	return result, response, err
 
 }

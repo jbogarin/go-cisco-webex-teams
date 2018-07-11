@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/go-querystring/query"
+	"github.com/peterhellberg/link"
 	"gopkg.in/resty.v1"
 )
 
@@ -38,6 +39,36 @@ type Room struct {
 // Rooms is the List of Rooms
 type Rooms struct {
 	Items []Room `json:"items,omitempty"`
+}
+
+// AddRoom is used to append a room to a slice of rooms
+func (rooms *Rooms) AddRoom(item Room) []Room {
+	rooms.Items = append(rooms.Items, item)
+	return rooms.Items
+}
+
+func roomLoop(linkHeader string) *Rooms {
+	items := &Rooms{}
+
+	for _, l := range link.Parse(linkHeader) {
+		if l.Rel == "next" {
+
+			response, err := RestyClient.R().
+				SetResult(&Rooms{}).
+				Get(l.URI)
+
+			if err != nil {
+				fmt.Println("Error")
+			}
+			items = response.Result().(*Rooms)
+			rooms := roomLoop(response.Header().Get("Link"))
+			for _, room := range rooms.Items {
+				items.AddRoom(room)
+			}
+		}
+	}
+
+	return items
 }
 
 // CreateRoom Creates a room. The authenticated user is automatically added as a member of the room.
@@ -151,6 +182,12 @@ func (s *RoomsService) ListRooms(queryParams *ListRoomsQueryParams) (*Rooms, *re
 	}
 
 	result := response.Result().(*Rooms)
+	items := roomLoop(response.Header().Get("Link"))
+
+	for _, room := range items.Items {
+		result.AddRoom(room)
+	}
+
 	return result, response, err
 
 }

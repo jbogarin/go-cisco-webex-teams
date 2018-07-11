@@ -31,7 +31,7 @@ func main() {
 	// GET memberships
 
 	membershipQueryParams := &webexteams.ListMembershipsQueryParams{
-		Max:         2,
+		Max:         10,
 		PersonEmail: myTestingEmail,
 	}
 
@@ -39,8 +39,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	for _, membership := range memberships.Items {
-		fmt.Println("GET:", membership.ID, membership.PersonEmail, membership.IsModerator, membership.Created)
+	for id, membership := range memberships.Items {
+		fmt.Println("GET:", id, membership.ID, membership.PersonEmail, membership.IsModerator, membership.Created)
 	}
 
 	// POST memberships

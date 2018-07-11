@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/go-querystring/query"
+	"github.com/peterhellberg/link"
 	"gopkg.in/resty.v1"
 )
 
@@ -46,6 +47,36 @@ type Person struct {
 	LastActivity time.Time `json:"lastActivity,omitempty"` // Person last active date/time.
 	Status       string    `json:"status,omitempty"`       // Person presence status (active or inactive).
 	PersonType   string    `json:"type,omitempty"`         // Person type (person or bot).
+}
+
+// AddPerson is used to append a person to a slice of People
+func (people *People) AddPerson(item Person) []Person {
+	people.Items = append(people.Items, item)
+	return people.Items
+}
+
+func personLoop(linkHeader string) *People {
+	items := &People{}
+
+	for _, l := range link.Parse(linkHeader) {
+		if l.Rel == "next" {
+
+			response, err := RestyClient.R().
+				SetResult(&People{}).
+				Get(l.URI)
+
+			if err != nil {
+				fmt.Println("Error")
+			}
+			items = response.Result().(*People)
+			people := personLoop(response.Header().Get("Link"))
+			for _, person := range people.Items {
+				items.AddPerson(person)
+			}
+		}
+	}
+
+	return items
 }
 
 // CreatePerson Create a new user account for a given organization.
@@ -178,6 +209,11 @@ func (s *PeopleService) ListPeople(queryParams *ListPeopleQueryParams) (*People,
 	}
 
 	result := response.Result().(*People)
+	items := personLoop(response.Header().Get("Link"))
+
+	for _, person := range items.Items {
+		result.AddPerson(person)
+	}
 	return result, response, err
 
 }

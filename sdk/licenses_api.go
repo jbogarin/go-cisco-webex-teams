@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/google/go-querystring/query"
+	"github.com/peterhellberg/link"
 	"gopkg.in/resty.v1"
 )
 
@@ -22,6 +23,36 @@ type License struct {
 // Licenses is the List of Licenses
 type Licenses struct {
 	Items []License `json:"items,omitempty"`
+}
+
+// AddLicense is used to append a license to a slice of licenses
+func (licenses *Licenses) AddLicense(item License) []License {
+	licenses.Items = append(licenses.Items, item)
+	return licenses.Items
+}
+
+func licenseLoop(linkHeader string) *Licenses {
+	items := &Licenses{}
+
+	for _, l := range link.Parse(linkHeader) {
+		if l.Rel == "next" {
+
+			response, err := RestyClient.R().
+				SetResult(&Licenses{}).
+				Get(l.URI)
+
+			if err != nil {
+				fmt.Println("Error")
+			}
+			items = response.Result().(*Licenses)
+			licenses := licenseLoop(response.Header().Get("Link"))
+			for _, license := range licenses.Items {
+				items.AddLicense(license)
+			}
+		}
+	}
+
+	return items
 }
 
 // GetLicense Shows details for a license, by ID.
@@ -77,6 +108,11 @@ func (s *LicensesService) ListLicenses(queryParams *ListLicensesQueryParams) (*L
 	}
 
 	result := response.Result().(*Licenses)
+	items := licenseLoop(response.Header().Get("Link"))
+
+	for _, license := range items.Items {
+		result.AddLicense(license)
+	}
 	return result, response, err
 
 }

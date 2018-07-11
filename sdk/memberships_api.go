@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/go-querystring/query"
+	"github.com/peterhellberg/link"
 	"gopkg.in/resty.v1"
 )
 
@@ -41,6 +42,36 @@ type MembershipCreateRequest struct {
 	PersonID    string `json:"personId,omitempty"`    // Person ID.
 	PersonEmail string `json:"personEmail,omitempty"` // Person email.
 	IsModerator bool   `json:"isModerator,omitempty"` // Membership is a moderator.
+}
+
+// AddMembership is used to append a membership to a slice of memberships
+func (memberships *Memberships) AddMembership(item Membership) []Membership {
+	memberships.Items = append(memberships.Items, item)
+	return memberships.Items
+}
+
+func membershipLoop(linkHeader string) *Memberships {
+	items := &Memberships{}
+
+	for _, l := range link.Parse(linkHeader) {
+		if l.Rel == "next" {
+
+			response, err := RestyClient.R().
+				SetResult(&Memberships{}).
+				Get(l.URI)
+
+			if err != nil {
+				fmt.Println("Error")
+			}
+			items = response.Result().(*Memberships)
+			memberships := membershipLoop(response.Header().Get("Link"))
+			for _, membership := range memberships.Items {
+				items.AddMembership(membership)
+			}
+		}
+	}
+
+	return items
 }
 
 // CreateMembership Add someone to a room by Person ID or email address; optionally making them a moderator.
@@ -151,6 +182,11 @@ func (s *MembershipsService) ListMemberships(queryParams *ListMembershipsQueryPa
 	}
 
 	result := response.Result().(*Memberships)
+	items := membershipLoop(response.Header().Get("Link"))
+
+	for _, membersip := range items.Items {
+		result.AddMembership(membersip)
+	}
 	return result, response, err
 
 }
