@@ -51,12 +51,11 @@ func (messages *Messages) AddMessage(item Message) []Message {
 	return messages.Items
 }
 
-func messageLoop(linkHeader string) *Messages {
+func messageLoop(linkHeader string, queryParams *ListMessagesQueryParams) *Messages {
 	items := &Messages{}
 
 	for _, l := range link.Parse(linkHeader) {
 		if l.Rel == "next" {
-
 			response, err := RestyClient.R().
 				SetResult(&Messages{}).
 				Get(l.URI)
@@ -65,9 +64,11 @@ func messageLoop(linkHeader string) *Messages {
 				fmt.Println("Error")
 			}
 			items = response.Result().(*Messages)
-			messages := messageLoop(response.Header().Get("Link"))
-			for _, message := range messages.Items {
-				items.AddMessage(message)
+			if !(queryParams.Max != 0 && len(items.Items) >= queryParams.Max) && !(queryParams.Max == 0 && len(items.Items) >= 50) {
+				messages := messageLoop(response.Header().Get("Link"), queryParams)
+				for _, message := range messages.Items {
+					items.AddMessage(message)
+				}
 			}
 		}
 	}
@@ -183,11 +184,15 @@ func (s *MessagesService) ListMessages(queryParams *ListMessagesQueryParams) (*M
 	}
 
 	result := response.Result().(*Messages)
-	items := messageLoop(response.Header().Get("Link"))
+	// Check if we need to loop for next page
+	if !(queryParams.Max != 0 && len(result.Items) >= queryParams.Max) && !(queryParams.Max == 0 && len(result.Items) >= 50) {
+		items := messageLoop(response.Header().Get("Link"), queryParams)
 
-	for _, message := range items.Items {
-		result.AddMessage(message)
+		for _, message := range items.Items {
+			result.AddMessage(message)
+		}
 	}
+
 	return result, response, err
 
 }
