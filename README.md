@@ -8,6 +8,10 @@ import "https://github.com/jbogarin/go-cisco-webex-teams/sdk"
 
 ```
 
+## Documentation
+
+https://godoc.org/github.com/jbogarin/go-cisco-webex-teams/sdk
+
 ## TODO ##
 
 1. Documentation
