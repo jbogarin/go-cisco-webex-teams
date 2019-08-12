@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-resty/resty"
 	"github.com/google/go-querystring/query"
 	"github.com/peterhellberg/link"
-	"gopkg.in/resty.v1"
 )
 
 // TeamsService is the service to communicate with the Teams API endpoint
@@ -42,7 +42,7 @@ func (teams *Teams) AddTeam(item Team) []Team {
 	return teams.Items
 }
 
-func teamLoop(linkHeader string) *Teams {
+func teamsPagination(linkHeader string, size, max int) *Teams {
 	items := &Teams{}
 
 	for _, l := range link.Parse(linkHeader) {
@@ -53,13 +53,24 @@ func teamLoop(linkHeader string) *Teams {
 				Get(l.URI)
 
 			if err != nil {
-				fmt.Println("Error")
+				return nil
 			}
 			items = response.Result().(*Teams)
-			teams := teamLoop(response.Header().Get("Link"))
-			for _, team := range teams.Items {
-				items.AddTeam(team)
+			if size != 0 {
+				size = size + len(items.Items)
+				if size < max {
+					teams := teamsPagination(response.Header().Get("Link"), size, max)
+					for _, team := range teams.Items {
+						items.AddTeam(team)
+					}
+				}
+			} else {
+				teams := teamsPagination(response.Header().Get("Link"), size, max)
+				for _, team := range teams.Items {
+					items.AddTeam(team)
+				}
 			}
+
 		}
 	}
 
@@ -141,12 +152,14 @@ func (s *TeamsService) GetTeam(teamID string) (*Team, *resty.Response, error) {
 
 // ListTeamsQueryParams are the query params for the ListTeams API Call
 type ListTeamsQueryParams struct {
-	Max int `url:"max,omitempty"` // Limit the maximum number of items in the response.
+	Max      int  `url:"max,omitempty"` // Limit the maximum number of items in the response.
+	Paginate bool // Indicates if pagination is needed
 }
 
 // ListTeams Lists teams to which the authenticated user belongs.
 /* Lists teams to which the authenticated user belongs.
 @param "max" (int) Limit the maximum number of items in the response.
+@param paginate (bool) indicates if pagination is needed
 @return Teams
 */
 func (s *TeamsService) ListTeams(queryParams *ListTeamsQueryParams) (*Teams, *resty.Response, error) {
@@ -165,10 +178,18 @@ func (s *TeamsService) ListTeams(queryParams *ListTeamsQueryParams) (*Teams, *re
 	}
 
 	result := response.Result().(*Teams)
-	items := teamLoop(response.Header().Get("Link"))
-
-	for _, team := range items.Items {
-		result.AddTeam(team)
+	if queryParams.Paginate == true {
+		items := teamsPagination(response.Header().Get("Link"), 0, 0)
+		for _, team := range items.Items {
+			result.AddTeam(team)
+		}
+	} else {
+		if len(result.Items) < queryParams.Max {
+			items := teamsPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
+			for _, team := range items.Items {
+				result.AddTeam(team)
+			}
+		}
 	}
 	return result, response, err
 

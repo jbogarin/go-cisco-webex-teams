@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-resty/resty"
 	"github.com/google/go-querystring/query"
 	"github.com/peterhellberg/link"
-	"gopkg.in/resty.v1"
 )
 
 // TeamMembershipsService is the service to communicate with the TeamMemberships API endpoint
@@ -42,13 +42,13 @@ type TeamMemberships struct {
 	Items []TeamMembership `json:"items,omitempty"`
 }
 
-// AddTeamMembership is used to append a room to a slice of rooms
+// AddTeamMembership is used to append a teamMembership to a slice of teamMemberships
 func (teamMembership *TeamMemberships) AddTeamMembership(item TeamMembership) []TeamMembership {
 	teamMembership.Items = append(teamMembership.Items, item)
 	return teamMembership.Items
 }
 
-func teamMembershipLoop(linkHeader string) *TeamMemberships {
+func teamMembershipsPagination(linkHeader string, size, max int) *TeamMemberships {
 	items := &TeamMemberships{}
 
 	for _, l := range link.Parse(linkHeader) {
@@ -59,13 +59,24 @@ func teamMembershipLoop(linkHeader string) *TeamMemberships {
 				Get(l.URI)
 
 			if err != nil {
-				fmt.Println("Error")
+				return nil
 			}
 			items = response.Result().(*TeamMemberships)
-			teamMemberships := teamMembershipLoop(response.Header().Get("Link"))
-			for _, teamMembership := range teamMemberships.Items {
-				items.AddTeamMembership(teamMembership)
+			if size != 0 {
+				size = size + len(items.Items)
+				if size < max {
+					teamMemberships := teamMembershipsPagination(response.Header().Get("Link"), size, max)
+					for _, teamMembership := range teamMemberships.Items {
+						items.AddTeamMembership(teamMembership)
+					}
+				}
+			} else {
+				teamMemberships := teamMembershipsPagination(response.Header().Get("Link"), size, max)
+				for _, teamMembership := range teamMemberships.Items {
+					items.AddTeamMembership(teamMembership)
+				}
 			}
+
 		}
 	}
 
@@ -145,8 +156,9 @@ func (s *TeamMembershipsService) GetTeamMembership(membershipID string) (*TeamMe
 
 // ListTeamMemberhipsQueryParams are the query params for the ListTeamMemberhips API Call
 type ListTeamMemberhipsQueryParams struct {
-	TeamID string `url:"teamId,omitempty"` // Team ID.
-	Max    int    `url:"max,omitempty"`    // Limit the maximum number of items in the response.
+	TeamID   string `url:"teamId,omitempty"` // Team ID.
+	Max      int    `url:"max,omitempty"`    // Limit the maximum number of items in the response.
+	Paginate bool   // Indicates if pagination is needed
 }
 
 // ListTeamMemberhips Lists all team memberships for a given team, specified by the teamID query parameter.
@@ -155,6 +167,7 @@ Use query parameters to filter the response.
 
  @param teamID Team ID.
  @param "max" (int) Limit the maximum number of items in the response.
+ @param paginate (bool) indicates if pagination is needed
  @return TeamMemberships
 */
 func (s *TeamMembershipsService) ListTeamMemberhips(queryParams *ListTeamMemberhipsQueryParams) (*TeamMemberships, *resty.Response, error) {
@@ -173,10 +186,18 @@ func (s *TeamMembershipsService) ListTeamMemberhips(queryParams *ListTeamMemberh
 	}
 
 	result := response.Result().(*TeamMemberships)
-	items := teamMembershipLoop(response.Header().Get("Link"))
-
-	for _, teamMembership := range items.Items {
-		result.AddTeamMembership(teamMembership)
+	if queryParams.Paginate == true {
+		items := teamMembershipsPagination(response.Header().Get("Link"), 0, 0)
+		for _, teamMembership := range items.Items {
+			result.AddTeamMembership(teamMembership)
+		}
+	} else {
+		if len(result.Items) < queryParams.Max {
+			items := teamMembershipsPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
+			for _, teamMembership := range items.Items {
+				result.AddTeamMembership(teamMembership)
+			}
+		}
 	}
 	return result, response, err
 

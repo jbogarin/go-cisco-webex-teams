@@ -1,8 +1,6 @@
 package webexteams
 
-import (
-	"gopkg.in/resty.v1"
-)
+import "github.com/go-resty/resty"
 
 // RestyClient is the REST Client
 var RestyClient *resty.Client

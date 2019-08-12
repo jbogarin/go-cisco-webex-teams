@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-resty/resty"
 	"github.com/google/go-querystring/query"
 	"github.com/peterhellberg/link"
-	"gopkg.in/resty.v1"
 )
 
 // MessagesService is the service to communicate with the Messages API endpoint
@@ -51,7 +51,7 @@ func (messages *Messages) AddMessage(item Message) []Message {
 	return messages.Items
 }
 
-func messageLoop(linkHeader string) *Messages {
+func messagesPagination(linkHeader string, size, max int) *Messages {
 	items := &Messages{}
 
 	for _, l := range link.Parse(linkHeader) {
@@ -62,13 +62,24 @@ func messageLoop(linkHeader string) *Messages {
 				Get(l.URI)
 
 			if err != nil {
-				fmt.Println("Error")
+				return nil
 			}
 			items = response.Result().(*Messages)
-			messages := messageLoop(response.Header().Get("Link"))
-			for _, message := range messages.Items {
-				items.AddMessage(message)
+			if size != 0 {
+				size = size + len(items.Items)
+				if size < max {
+					messages := messagesPagination(response.Header().Get("Link"), size, max)
+					for _, message := range messages.Items {
+						items.AddMessage(message)
+					}
+				}
+			} else {
+				messages := messagesPagination(response.Header().Get("Link"), size, max)
+				for _, message := range messages.Items {
+					items.AddMessage(message)
+				}
 			}
+
 		}
 	}
 
@@ -153,6 +164,7 @@ type ListMessagesQueryParams struct {
 	Before          time.Time `url:"before,omitempty"`          // List messages sent before a date and time, in ISO8601 format. Format: yyyy-MM-dd&#39;T&#39;HH:mm:ss.SSSZ
 	BeforeMessage   string    `url:"beforeMessage,omitempty"`   // List messages sent before a message, by ID.
 	Max             int       `url:"max,omitempty"`             // Limit the maximum number of items in the response.
+	Paginate        bool      // Indicates if pagination is needed
 }
 
 // ListMessages Lists all messages in a room. Each message will include content attachments if present.
@@ -165,6 +177,7 @@ Long result sets will be split into pages.
  @param "before" (time.Time) List messages sent before a date and time, in ISO8601 format. Format: yyyy-MM-dd&#39;T&#39;HH:mm:ss.SSSZ
  @param "beforeMessage" (string) List messages sent before a message, by ID.
  @param "max" (int) Limit the maximum number of items in the response.
+ @param "paginate" (bool) Indicates if pagination is needed
  @return Messages
 */
 func (s *MessagesService) ListMessages(queryParams *ListMessagesQueryParams) (*Messages, *resty.Response, error) {
@@ -183,11 +196,20 @@ func (s *MessagesService) ListMessages(queryParams *ListMessagesQueryParams) (*M
 	}
 
 	result := response.Result().(*Messages)
-	items := messageLoop(response.Header().Get("Link"))
-
-	for _, message := range items.Items {
-		result.AddMessage(message)
+	if queryParams.Paginate == true {
+		items := messagesPagination(response.Header().Get("Link"), 0, 0)
+		for _, message := range items.Items {
+			result.AddMessage(message)
+		}
+	} else {
+		if len(result.Items) < queryParams.Max {
+			items := messagesPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
+			for _, message := range items.Items {
+				result.AddMessage(message)
+			}
+		}
 	}
+
 	return result, response, err
 
 }

@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-resty/resty"
 	"github.com/google/go-querystring/query"
 	"github.com/peterhellberg/link"
-	"gopkg.in/resty.v1"
 )
 
 // RoomsService is the service to communicate with the Rooms API endpoint
@@ -47,7 +47,7 @@ func (rooms *Rooms) AddRoom(item Room) []Room {
 	return rooms.Items
 }
 
-func roomLoop(linkHeader string) *Rooms {
+func roomsPagination(linkHeader string, size, max int) *Rooms {
 	items := &Rooms{}
 
 	for _, l := range link.Parse(linkHeader) {
@@ -58,13 +58,24 @@ func roomLoop(linkHeader string) *Rooms {
 				Get(l.URI)
 
 			if err != nil {
-				fmt.Println("Error")
+				return nil
 			}
 			items = response.Result().(*Rooms)
-			rooms := roomLoop(response.Header().Get("Link"))
-			for _, room := range rooms.Items {
-				items.AddRoom(room)
+			if size != 0 {
+				size = size + len(items.Items)
+				if size < max {
+					rooms := roomsPagination(response.Header().Get("Link"), size, max)
+					for _, room := range rooms.Items {
+						items.AddRoom(room)
+					}
+				}
+			} else {
+				rooms := roomsPagination(response.Header().Get("Link"), size, max)
+				for _, room := range rooms.Items {
+					items.AddRoom(room)
+				}
 			}
+
 		}
 	}
 
@@ -152,6 +163,7 @@ type ListRoomsQueryParams struct {
 	RoomType string `url:"type,omitempty"`   // direct returns all 1-to-1 rooms. group returns all group rooms.
 	SortBy   string `url:"sortBy,omitempty"` // Sort results by room ID (id), most recent activity (lastactivity), or most recently created (created).
 	Max      int    `url:"max,omitempty"`    // Limit the maximum number of items in the response.
+	Paginate bool   // Indicates if pagination is needed
 }
 
 // ListRooms List rooms.
@@ -164,6 +176,7 @@ Long result sets will be split into pages.
  @param "type_" (string) direct returns all 1-to-1 rooms. group returns all group rooms.
  @param "sortBy" (string) Sort results by room ID (id), most recent activity (lastactivity), or most recently created (created).
  @param "max" (int) Limit the maximum number of items in the response.
+ @param paginate (bool) indicates if pagination is needed
  @return Rooms
 */
 func (s *RoomsService) ListRooms(queryParams *ListRoomsQueryParams) (*Rooms, *resty.Response, error) {
@@ -182,10 +195,18 @@ func (s *RoomsService) ListRooms(queryParams *ListRoomsQueryParams) (*Rooms, *re
 	}
 
 	result := response.Result().(*Rooms)
-	items := roomLoop(response.Header().Get("Link"))
-
-	for _, room := range items.Items {
-		result.AddRoom(room)
+	if queryParams.Paginate == true {
+		items := roomsPagination(response.Header().Get("Link"), 0, 0)
+		for _, room := range items.Items {
+			result.AddRoom(room)
+		}
+	} else {
+		if len(result.Items) < queryParams.Max {
+			items := roomsPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
+			for _, room := range items.Items {
+				result.AddRoom(room)
+			}
+		}
 	}
 
 	return result, response, err

@@ -6,9 +6,9 @@ import (
 
 	"time"
 
+	"github.com/go-resty/resty"
 	"github.com/google/go-querystring/query"
 	"github.com/peterhellberg/link"
-	"gopkg.in/resty.v1"
 )
 
 // MembershipsService is the service to communicate with the Memberships API endpoint
@@ -50,7 +50,7 @@ func (memberships *Memberships) AddMembership(item Membership) []Membership {
 	return memberships.Items
 }
 
-func membershipLoop(linkHeader string) *Memberships {
+func membershipsPagination(linkHeader string, size, max int) *Memberships {
 	items := &Memberships{}
 
 	for _, l := range link.Parse(linkHeader) {
@@ -61,21 +61,32 @@ func membershipLoop(linkHeader string) *Memberships {
 				Get(l.URI)
 
 			if err != nil {
-				fmt.Println("Error")
+				return nil
 			}
 			items = response.Result().(*Memberships)
-			memberships := membershipLoop(response.Header().Get("Link"))
-			for _, membership := range memberships.Items {
-				items.AddMembership(membership)
+			if size != 0 {
+				size = size + len(items.Items)
+				if size < max {
+					memberships := membershipsPagination(response.Header().Get("Link"), size, max)
+					for _, membership := range memberships.Items {
+						items.AddMembership(membership)
+					}
+				}
+			} else {
+				memberships := membershipsPagination(response.Header().Get("Link"), size, max)
+				for _, membership := range memberships.Items {
+					items.AddMembership(membership)
+				}
 			}
+
 		}
 	}
 
 	return items
 }
 
-// CreateMembership Add someone to a room by Person ID or email address; optionally making them a moderator.
-/* Add someone to a room by Person ID or email address; optionally making them a moderator.
+// CreateMembership Add someone to a membership by Person ID or email address; optionally making them a moderator.
+/* Add someone to a membership by Person ID or email address; optionally making them a moderator.
 @param membershipCreateRequest
 @return Membership
 */
@@ -151,12 +162,13 @@ type ListMembershipsQueryParams struct {
 	PersonID    string `url:"personId,omitempty"`    // Person ID.
 	PersonEmail string `url:"personEmail,omitempty"` // Person email.
 	Max         int    `url:"max,omitempty"`         // Limit the maximum number of items in the response.
+	Paginate    bool   // Indicates if pagination is needed
 }
 
-// ListMemberships Lists all room memberships. By default, lists memberships for rooms to which the authenticated user belongs.
-/* Lists all room memberships. By default, lists memberships for rooms to which the authenticated user belongs.
+// ListMemberships Lists all membership memberships. By default, lists memberships for Memberships to which the authenticated user belongs.
+/* Lists all membership memberships. By default, lists memberships for Memberships to which the authenticated user belongs.
 Use query parameters to filter the response.
-Use roomID to list memberships for a room, by ID.
+Use roomID to list memberships for a membership, by ID.
 Use either personID or personEmail to filter the results.
 Long result sets will be split into pages.
 
@@ -164,6 +176,7 @@ Long result sets will be split into pages.
  @param "personId" (string) Person ID.
  @param "personEmail" (string) Person email.
  @param "max" (int) Limit the maximum number of items in the response.
+ @param "paginate" (bool) Indicates if pagination is needed
  @return Memberships
 */
 func (s *MembershipsService) ListMemberships(queryParams *ListMembershipsQueryParams) (*Memberships, *resty.Response, error) {
@@ -182,11 +195,20 @@ func (s *MembershipsService) ListMemberships(queryParams *ListMembershipsQueryPa
 	}
 
 	result := response.Result().(*Memberships)
-	items := membershipLoop(response.Header().Get("Link"))
-
-	for _, membersip := range items.Items {
-		result.AddMembership(membersip)
+	if queryParams.Paginate == true {
+		items := membershipsPagination(response.Header().Get("Link"), 0, 0)
+		for _, membership := range items.Items {
+			result.AddMembership(membership)
+		}
+	} else {
+		if len(result.Items) < queryParams.Max {
+			items := membershipsPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
+			for _, membership := range items.Items {
+				result.AddMembership(membership)
+			}
+		}
 	}
+
 	return result, response, err
 
 }

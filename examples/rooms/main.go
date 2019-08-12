@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/jbogarin/go-cisco-webex-teams/sdk"
-	resty "gopkg.in/resty.v1"
+	"github.com/go-resty/resty"
+	webexteams "github.com/jbogarin/go-cisco-webex-teams/sdk"
 )
 
 // Client is Webex Teams API client
@@ -25,21 +25,22 @@ func main() {
 
 	// POST rooms
 
-	roomRequest := &webexteams.RoomCreateRequest{
-		Title: "Go Test Room",
-	}
+	// roomRequest := &webexteams.RoomCreateRequest{
+	// 	Title: "Go Test Room",
+	// }
 
-	newRoom, _, err := Client.Rooms.CreateRoom(roomRequest)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// newRoom, response, err := Client.Rooms.CreateRoom(roomRequest)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	fmt.Println("POST:", newRoom.ID, newRoom.Title, newRoom.IsLocked, newRoom.Created)
+	// fmt.Println("POST:", newRoom.ID, newRoom.Title, newRoom.IsLocked, newRoom.Created, response.StatusCode())
 
 	// GET rooms
 	roomsQueryParams := &webexteams.ListRoomsQueryParams{
-		Max:    10,
-		TeamID: "",
+		Max:      2000,
+		TeamID:   "",
+		Paginate: false,
 	}
 
 	rooms, _, err := Client.Rooms.ListRooms(roomsQueryParams)
@@ -52,31 +53,31 @@ func main() {
 
 	// GET rooms/<id>
 
-	room, _, err := Client.Rooms.GetRoom(newRoom.ID)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// room, _, err := Client.Rooms.GetRoom(newRoom.ID)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	fmt.Println("GET <ID>:", room.ID, room.Title, room.IsLocked, room.Created)
+	// fmt.Println("GET <ID>:", room.ID, room.Title, room.IsLocked, room.Created)
 
-	updateRoomRequest := &webexteams.RoomUpdateRequest{
-		Title: "Go Test Room 2",
-	}
+	// updateRoomRequest := &webexteams.RoomUpdateRequest{
+	// 	Title: "Go Test Room 2",
+	// }
 
-	updatedRoom, _, err := Client.Rooms.UpdateRoom(newRoom.ID, updateRoomRequest)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// updatedRoom, _, err := Client.Rooms.UpdateRoom(newRoom.ID, updateRoomRequest)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	fmt.Println("PUT:", updatedRoom.ID, updatedRoom.Title, updatedRoom.IsLocked, updatedRoom.Created)
+	// fmt.Println("PUT:", updatedRoom.ID, updatedRoom.Title, updatedRoom.IsLocked, updatedRoom.Created)
 
-	// DELETE
+	// // DELETE
 
-	resp, err := Client.Rooms.DeleteRoom(newRoom.ID)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// resp, err := Client.Rooms.DeleteRoom(newRoom.ID)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	fmt.Println("DELETE:", resp.StatusCode())
+	// fmt.Println("DELETE:", resp.StatusCode())
 
 }

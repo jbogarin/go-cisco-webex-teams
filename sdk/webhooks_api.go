@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-resty/resty"
 	"github.com/google/go-querystring/query"
 	"github.com/peterhellberg/link"
-	"gopkg.in/resty.v1"
 )
 
 // WebhooksService is the service to communicate with the Webhooks API endpoint
@@ -51,13 +51,13 @@ type Webhooks struct {
 	Items []Webhook `json:"items,omitempty"`
 }
 
-// AddWebhooks is used to append a webhook to a slice of webhooks
+// AddWebhook is used to append a webhook to a slice of webhooks
 func (webhooks *Webhooks) AddWebhook(item Webhook) []Webhook {
 	webhooks.Items = append(webhooks.Items, item)
 	return webhooks.Items
 }
 
-func webhookLoop(linkHeader string) *Webhooks {
+func webhooksPagination(linkHeader string, size, max int) *Webhooks {
 	items := &Webhooks{}
 
 	for _, l := range link.Parse(linkHeader) {
@@ -68,13 +68,24 @@ func webhookLoop(linkHeader string) *Webhooks {
 				Get(l.URI)
 
 			if err != nil {
-				fmt.Println("Error")
+				return nil
 			}
 			items = response.Result().(*Webhooks)
-			webhooks := webhookLoop(response.Header().Get("Link"))
-			for _, webhook := range webhooks.Items {
-				items.AddWebhook(webhook)
+			if size != 0 {
+				size = size + len(items.Items)
+				if size < max {
+					webhooks := webhooksPagination(response.Header().Get("Link"), size, max)
+					for _, webhook := range webhooks.Items {
+						items.AddWebhook(webhook)
+					}
+				}
+			} else {
+				webhooks := webhooksPagination(response.Header().Get("Link"), size, max)
+				for _, webhook := range webhooks.Items {
+					items.AddWebhook(webhook)
+				}
 			}
+
 		}
 	}
 
@@ -154,12 +165,14 @@ func (s *WebhooksService) GetWebhook(webhookID string) (*Webhook, *resty.Respons
 
 // ListWebhooksQueryParams are the query params for the ListWebhooks API Call
 type ListWebhooksQueryParams struct {
-	Max int `url:"max,omitempty"` // Limit the maximum number of items in the response.
+	Max      int  `url:"max,omitempty"` // Limit the maximum number of items in the response.
+	Paginate bool // Indicates if pagination is needed
 }
 
 // ListWebhooks Lists all of your webhooks.
 /* Lists all of your webhooks.
 @param "max" (int) Limit the maximum number of items in the response.
+@param paginate (bool) indicates if pagination is needed
 @return Webhooks
 */
 func (s *WebhooksService) ListWebhooks(queryParams *ListWebhooksQueryParams) (*Webhooks, *resty.Response, error) {
@@ -178,10 +191,18 @@ func (s *WebhooksService) ListWebhooks(queryParams *ListWebhooksQueryParams) (*W
 	}
 
 	result := response.Result().(*Webhooks)
-	items := webhookLoop(response.Header().Get("Link"))
-
-	for _, webhook := range items.Items {
-		result.AddWebhook(webhook)
+	if queryParams.Paginate == true {
+		items := webhooksPagination(response.Header().Get("Link"), 0, 0)
+		for _, webhook := range items.Items {
+			result.AddWebhook(webhook)
+		}
+	} else {
+		if len(result.Items) < queryParams.Max {
+			items := webhooksPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
+			for _, webhook := range items.Items {
+				result.AddWebhook(webhook)
+			}
+		}
 	}
 
 	return result, response, err

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/go-resty/resty"
 	"github.com/google/go-querystring/query"
 	"github.com/peterhellberg/link"
-	"gopkg.in/resty.v1"
 )
 
 // LicensesService is the service to communicate with the Licenses API endpoint
