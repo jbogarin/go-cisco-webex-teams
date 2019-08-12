@@ -12,6 +12,10 @@ import "https://github.com/jbogarin/go-cisco-webex-teams/sdk"
 
 https://godoc.org/github.com/jbogarin/go-cisco-webex-teams/sdk
 
+## Changes
+
+* 2019-08-12: Tag v0.2.0: *Breaking change*, moved from resty v1 to resty v2. Include paginate option in List query params
+
 ## TODO ##
 
 1. Documentation
