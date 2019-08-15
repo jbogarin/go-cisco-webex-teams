@@ -27,6 +27,8 @@ type WebhookCreateRequest struct {
 type WebhookUpdateRequest struct {
 	Name      string `json:"name,omitempty"`      // Webhook name.
 	TargetURL string `json:"targetUrl,omitempty"` // Webhook target URL.
+	Secret    string `json:"secret,omitempty"`    // Webhook secret.
+	Status    string `json:"status,omitempty"`    // Webhook status.
 }
 
 // Webhook is the Webhook definition
