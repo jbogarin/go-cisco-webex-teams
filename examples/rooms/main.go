@@ -25,16 +25,16 @@ func main() {
 
 	// POST rooms
 
-	// roomRequest := &webexteams.RoomCreateRequest{
-	// 	Title: "Go Test Room",
-	// }
+	roomRequest := &webexteams.RoomCreateRequest{
+		Title: "Go Test Room",
+	}
 
-	// newRoom, response, err := Client.Rooms.CreateRoom(roomRequest)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	newRoom, response, err := Client.Rooms.CreateRoom(roomRequest)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// fmt.Println("POST:", newRoom.ID, newRoom.Title, newRoom.IsLocked, newRoom.Created, response.StatusCode())
+	fmt.Println("POST:", newRoom.ID, newRoom.Title, newRoom.IsLocked, newRoom.Created, response.StatusCode())
 
 	// GET rooms
 	roomsQueryParams := &webexteams.ListRoomsQueryParams{
@@ -53,31 +53,31 @@ func main() {
 
 	// GET rooms/<id>
 
-	// room, _, err := Client.Rooms.GetRoom(newRoom.ID)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	room, _, err := Client.Rooms.GetRoom(newRoom.ID)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// fmt.Println("GET <ID>:", room.ID, room.Title, room.IsLocked, room.Created)
+	fmt.Println("GET <ID>:", room.ID, room.Title, room.IsLocked, room.Created)
 
-	// updateRoomRequest := &webexteams.RoomUpdateRequest{
-	// 	Title: "Go Test Room 2",
-	// }
+	updateRoomRequest := &webexteams.RoomUpdateRequest{
+		Title: "Go Test Room 2",
+	}
 
-	// updatedRoom, _, err := Client.Rooms.UpdateRoom(newRoom.ID, updateRoomRequest)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	updatedRoom, _, err := Client.Rooms.UpdateRoom(newRoom.ID, updateRoomRequest)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// fmt.Println("PUT:", updatedRoom.ID, updatedRoom.Title, updatedRoom.IsLocked, updatedRoom.Created)
+	fmt.Println("PUT:", updatedRoom.ID, updatedRoom.Title, updatedRoom.IsLocked, updatedRoom.Created)
 
 	// // DELETE
 
-	// resp, err := Client.Rooms.DeleteRoom(newRoom.ID)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	resp, err := Client.Rooms.DeleteRoom(newRoom.ID)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// fmt.Println("DELETE:", resp.StatusCode())
+	fmt.Println("DELETE:", resp.StatusCode())
 
 }

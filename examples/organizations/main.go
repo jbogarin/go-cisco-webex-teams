@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/jbogarin/go-cisco-webex-teams/sdk"
-	resty "gopkg.in/resty.v1"
+	"github.com/go-resty/resty"
+	webexteams "github.com/jbogarin/go-cisco-webex-teams/sdk"
 )
 
 // Client is Webex Teams API client
