@@ -1,6 +1,10 @@
 package webexteams
 
-import "github.com/go-resty/resty"
+import (
+	"os"
+
+	"github.com/go-resty/resty"
+)
 
 // RestyClient is the REST Client
 var RestyClient *resty.Client
@@ -30,16 +34,21 @@ type service struct {
 	client *Client
 }
 
+// SetAuthToken defines the Authorization token sent in the request
+func (s *Client) SetAuthToken(accessToken string) {
+	RestyClient.SetAuthToken(accessToken)
+}
+
 // NewClient creates a new API client. Requires a userAgent string describing your application.
 // optionally a custom http.Client to allow for advanced features such as caching.
-func NewClient(client *resty.Client) *Client {
-	if client == nil {
-		client = resty.New()
-
-	}
+func NewClient() *Client {
+	client := resty.New()
 	c := &Client{}
 	RestyClient = client
 	RestyClient.SetHostURL(apiURL)
+	if os.Getenv("WEBEX_TEAMS_ACCESS_TOKEN") != "" {
+		RestyClient.SetAuthToken(os.Getenv("WEBEX_TEAMS_ACCESS_TOKEN"))
+	}
 
 	// API Services
 	c.Contents = (*ContentsService)(&c.common)

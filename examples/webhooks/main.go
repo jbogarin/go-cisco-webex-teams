@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/go-resty/resty"
 	webexteams "github.com/jbogarin/go-cisco-webex-teams/sdk"
 )
 
@@ -12,10 +11,7 @@ import (
 var Client *webexteams.Client
 
 func main() {
-	client := resty.New()
-	token := "" // Change to your test token
-	client.SetAuthToken(token)
-	Client = webexteams.NewClient(client)
+	Client = webexteams.NewClient()
 
 	myRoomID := ""   // Change to your testing room
 	webHookURL := "" // Change this to your test URL

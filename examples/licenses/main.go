@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/go-resty/resty"
 	webexteams "github.com/jbogarin/go-cisco-webex-teams/sdk"
 )
 
@@ -12,10 +11,7 @@ import (
 var Client *webexteams.Client
 
 func main() {
-	client := resty.New()
-	token := "" // Change to your test token
-	client.SetAuthToken(token)
-	Client = webexteams.NewClient(client)
+	Client = webexteams.NewClient()
 
 	/*
 
@@ -28,11 +24,12 @@ func main() {
 		Max: 2,
 	}
 
-	Licenses, _, err := Client.Licenses.ListLicenses(queryParams)
+	Licenses, resp, err := Client.Licenses.ListLicenses(queryParams)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	fmt.Println(resp.StatusCode())
 	LicenseID := ""
 	for id, License := range Licenses.Items {
 		fmt.Println("GET:", id, License.ID, License.Name, License.TotalUnits, License.ConsumedUnits)
