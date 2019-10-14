@@ -3,7 +3,7 @@ package webexteams
 import (
 	"os"
 
-	"github.com/go-resty/resty"
+	"github.com/go-resty/resty/v2"
 )
 
 // RestyClient is the REST Client
