@@ -15,6 +15,7 @@ https://godoc.org/github.com/jbogarin/go-cisco-webex-teams/sdk
 
 * 2019-08-12: **Tag v0.2.0**: _Breaking change_, moved from resty v1 to resty v2. Include paginate option in List query params
 * 2019-09-10: **Tag v0.3.0**: _Breaking change_, removed complexity from client, resty is a dependency for the library but it is not longer necessary to import it in the code using the SDK.
+* 2019-10-14: **Tag v0.4.0**: _Breaking change_, added Go modules functionality
 
 ## Authorization Token
 
