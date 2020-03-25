@@ -21,8 +21,8 @@ func main() {
 
 	// GET people
 	queryParams := &webexteams.ListPeopleQueryParams{
-		DisplayName: "", // Change to the person you want to look for
-		Max:         2,
+		Email: "", // Change to the person you want to look for
+		Max:   2,
 	}
 
 	people, _, err := Client.People.ListPeople(queryParams)
@@ -49,5 +49,4 @@ func main() {
 		log.Fatal(err)
 	}
 	fmt.Println("GET ME:", me.ID, me.DisplayName, me.Created)
-
 }
