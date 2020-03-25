@@ -18,6 +18,7 @@ type Client struct {
 
 	// API Services
 	Contents        *ContentsService
+	Devices         *DevicesService
 	Licenses        *LicensesService
 	Memberships     *MembershipsService
 	Messages        *MessagesService
@@ -52,6 +53,7 @@ func NewClient() *Client {
 
 	// API Services
 	c.Contents = (*ContentsService)(&c.common)
+	c.Devices = (*DevicesService)(&c.common)
 	c.Licenses = (*LicensesService)(&c.common)
 	c.Memberships = (*MembershipsService)(&c.common)
 	c.Messages = (*MessagesService)(&c.common)
