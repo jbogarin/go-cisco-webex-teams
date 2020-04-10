@@ -48,6 +48,31 @@ type Webhook struct {
 	Created   time.Time `json:"created,omitempty"`   // Webhook creation date/time.
 }
 
+// WebhookRequestData is the Webhook trigger request
+type WebhookRequestData struct {
+	ID          string    `json:"id,omitempty"`
+	RoomID      string    `json:"roomId,omitempty"`
+	PersonID    string    `json:"personId,omitempty"`
+	PersonEmail string    `json:"personEmail,omitempty"`
+	Created     time.Time `json:"created,omitempty"`
+}
+
+// WebhookRequest is the Webhook trigger request
+type WebhookRequest struct {
+	ID        string             `json:"id,omitempty"`
+	Name      string             `json:"name,omitempty"`
+	Resource  string             `json:"resource,omitempty"`
+	Event     string             `json:"event,omitempty"`
+	Filter    string             `json:"filter,omitempty"`
+	OrgID     string             `json:"orgId,omitempty"`
+	CreatedBy string             `json:"createdBy,omitempty"`
+	AppID     string             `json:"appId,omitempty"`
+	OwnedBy   string             `json:"ownedBy,omitempty"`
+	Status    string             `json:"status,omitempty"`
+	ActorID   string             `json:"actorId,omitempty"`
+	Data      WebhookRequestData `json:"data",omitempty`
+}
+
 // Webhooks is the List of Webhooks
 type Webhooks struct {
 	Items []Webhook `json:"items,omitempty"`
