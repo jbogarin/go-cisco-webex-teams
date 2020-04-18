@@ -15,7 +15,7 @@ Method | HTTP request | Description
 
 Post a plain text or rich text message, and optionally, a media content attachment, to a room.
 
-Post a plain text or rich text message, and optionally, a media content attachment, to a room. The files parameter is an array, which accepts multiple values to allow for future expansion, but currently only one file may be included with the message. 
+Post a plain text or rich text message, and optionally, a media content attachment, to a room. The files parameter is an array of File struct, which accepts multiple values to allow for future expansion, but currently only one file may be included with the message. 
 
 
 ### Parameters

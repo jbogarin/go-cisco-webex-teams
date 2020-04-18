@@ -1,11 +1,14 @@
 package webexteams
 
 import (
+	"errors"
 	"fmt"
+	"io"
+	"net/url"
 	"strings"
 	"time"
 
-	"github.com/go-resty/resty/v2"
+	"github.com/go-resty/resty"
 	"github.com/google/go-querystring/query"
 	"github.com/peterhellberg/link"
 )
@@ -13,14 +16,23 @@ import (
 // MessagesService is the service to communicate with the Messages API endpoint
 type MessagesService service
 
+// File is the struct used to define a file that needs to be sent. A file can either be a remote URI 
+// or an io.Reader. If RemoteFileURI is set, it takes precedence over the Reader.  
+type File struct {
+	Name        	string    `json:"fileName,omitempty"`        // File Name.
+	Reader      	io.Reader `json:"fileReader,omitempty"`   	 // File io.Reader.
+	ContentType 	string    `json:"contentType,omitempty"`     // File Content Type.
+	RemoteFileURI   string    `json:"remoteFileURI,omitempty"`   // Remote file URI.
+}
+
 // MessageCreateRequest is the Create Message Request Parameters
 type MessageCreateRequest struct {
-	RoomID        string   `json:"roomId,omitempty"`        // Room ID.
-	ToPersonID    string   `json:"toPersonId,omitempty"`    // Person ID (for type=direct).
-	ToPersonEmail string   `json:"toPersonEmail,omitempty"` // Person email (for type=direct).
-	Text          string   `json:"text,omitempty"`          // Message in plain text format.
-	Markdown      string   `json:"markdown,omitempty"`      // Message in markdown format.
-	Files         []string `json:"files,omitempty"`         // File URL array.
+	RoomID        string   			`json:"roomId,omitempty"`        // Room ID.
+	ToPersonID    string   			`json:"toPersonId,omitempty"`    // Person ID (for type=direct).
+	ToPersonEmail string   			`json:"toPersonEmail,omitempty"` // Person email (for type=direct).
+	Text          string   			`json:"text,omitempty"`          // Message in plain text format.
+	Markdown      string   			`json:"markdown,omitempty"`      // Message in markdown format.
+	Files    	  []File 			`json:"files,omitempty"` 	 	 // files array.
 }
 
 // Message is the Message definition
@@ -32,7 +44,7 @@ type Message struct {
 	ToPersonEmail   string    `json:"toPersonEmail,omitempty"`   // Person email (for type=direct).
 	Text            string    `json:"text,omitempty"`            // Message in plain text format.
 	Markdown        string    `json:"markdown,omitempty"`        // Message in markdown format.
-	Files           []string  `json:"files,omitempty"`           // File URL array.
+	Files           []string `json:"files,omitempty"`            // File array.
 	PersonID        string    `json:"personId,omitempty"`        // Person ID.
 	PersonEmail     string    `json:"personEmail,omitempty"`     // Person Email.
 	Created         time.Time `json:"created,omitempty"`         // Message creation date/time.
@@ -97,10 +109,41 @@ func (s *MessagesService) CreateMessage(messageCreateRequest *MessageCreateReque
 
 	path := "/messages/"
 
-	response, err := RestyClient.R().
-		SetBody(messageCreateRequest).
-		SetResult(&Message{}).
-		Post(path)
+	responsePart := RestyClient.R()
+
+	if messageCreateRequest.RoomID != "" {
+		responsePart.SetMultiValueFormData(url.Values{"roomId": []string{messageCreateRequest.RoomID}})
+	}
+
+	if messageCreateRequest.Markdown != "" {
+		responsePart.SetMultiValueFormData(url.Values{"markdown": []string{messageCreateRequest.Markdown}})
+	}
+
+	if messageCreateRequest.Text != "" {
+		responsePart.SetMultiValueFormData(url.Values{"text": []string{messageCreateRequest.Text}})
+	}
+
+	if messageCreateRequest.ToPersonEmail != "" {
+		responsePart.SetMultiValueFormData(url.Values{"toPersonEmail": []string{messageCreateRequest.ToPersonEmail}})
+	}
+
+	if messageCreateRequest.ToPersonID != "" {
+		responsePart.SetMultiValueFormData(url.Values{"toPersonId": []string{messageCreateRequest.ToPersonID}})
+	}
+
+	if len(messageCreateRequest.Files) > 1 {
+		return nil, nil, errors.New("Multi file attachment is not supported yet.")
+	}
+
+	for _, fileToSend := range messageCreateRequest.Files {
+		if fileToSend.RemoteFileURI != "" {
+			responsePart.SetMultiValueFormData(url.Values{"files": []string{fileToSend.RemoteFileURI}})
+		} else if fileToSend.Reader != nil {
+			responsePart.SetMultipartField("files", fileToSend.Name, fileToSend.ContentType, fileToSend.Reader)
+		}
+	}
+
+	response, err := responsePart.SetResult(&Message{}).Post(path)
 
 	if err != nil {
 		return nil, nil, err
