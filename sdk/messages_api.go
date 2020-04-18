@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-resty/resty"
+	"github.com/go-resty/resty/v2"
 	"github.com/google/go-querystring/query"
 	"github.com/peterhellberg/link"
 )
@@ -112,23 +112,23 @@ func (s *MessagesService) CreateMessage(messageCreateRequest *MessageCreateReque
 	responsePart := RestyClient.R()
 
 	if messageCreateRequest.RoomID != "" {
-		responsePart.SetMultiValueFormData(url.Values{"roomId": []string{messageCreateRequest.RoomID}})
+		responsePart.SetFormDataFromValues(url.Values{"roomId": []string{messageCreateRequest.RoomID}})
 	}
 
 	if messageCreateRequest.Markdown != "" {
-		responsePart.SetMultiValueFormData(url.Values{"markdown": []string{messageCreateRequest.Markdown}})
+		responsePart.SetFormDataFromValues(url.Values{"markdown": []string{messageCreateRequest.Markdown}})
 	}
 
 	if messageCreateRequest.Text != "" {
-		responsePart.SetMultiValueFormData(url.Values{"text": []string{messageCreateRequest.Text}})
+		responsePart.SetFormDataFromValues(url.Values{"text": []string{messageCreateRequest.Text}})
 	}
 
 	if messageCreateRequest.ToPersonEmail != "" {
-		responsePart.SetMultiValueFormData(url.Values{"toPersonEmail": []string{messageCreateRequest.ToPersonEmail}})
+		responsePart.SetFormDataFromValues(url.Values{"toPersonEmail": []string{messageCreateRequest.ToPersonEmail}})
 	}
 
 	if messageCreateRequest.ToPersonID != "" {
-		responsePart.SetMultiValueFormData(url.Values{"toPersonId": []string{messageCreateRequest.ToPersonID}})
+		responsePart.SetFormDataFromValues(url.Values{"toPersonId": []string{messageCreateRequest.ToPersonID}})
 	}
 
 	if len(messageCreateRequest.Files) > 1 {
@@ -137,7 +137,7 @@ func (s *MessagesService) CreateMessage(messageCreateRequest *MessageCreateReque
 
 	for _, fileToSend := range messageCreateRequest.Files {
 		if fileToSend.RemoteFileURI != "" {
-			responsePart.SetMultiValueFormData(url.Values{"files": []string{fileToSend.RemoteFileURI}})
+			responsePart.SetFormDataFromValues(url.Values{"files": []string{fileToSend.RemoteFileURI}})
 		} else if fileToSend.Reader != nil {
 			responsePart.SetMultipartField("files", fileToSend.Name, fileToSend.ContentType, fileToSend.Reader)
 		}
