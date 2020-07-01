@@ -70,7 +70,7 @@ type WebhookRequest struct {
 	OwnedBy   string             `json:"ownedBy,omitempty"`
 	Status    string             `json:"status,omitempty"`
 	ActorID   string             `json:"actorId,omitempty"`
-	Data      WebhookRequestData `json:"data",omitempty`
+	Data      WebhookRequestData `json:"data,omitempty"`
 }
 
 // Webhooks is the List of Webhooks

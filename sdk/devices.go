@@ -29,7 +29,7 @@ type DeviceCode struct {
 	Code    string    `json:"code,omitempty"`
 	PlaceID string    `json:"placeId,omitempty"`
 	Created time.Time `json:"created,omitempty"`
-	expires time.Time `json:"expires,omitempty"`
+	Expires time.Time `json:"expires,omitempty"`
 }
 
 // Device is the Device definition
@@ -101,7 +101,7 @@ Currently, activation codes may only be generated for shared places--personal mo
  @param placeId (string) The placeId of the place where the device will be activated.
  @return DeviceCode
 */
-func (s *DevicesService) CreateDevice(deviceCodeRequest *DeviceCodeRequest) (*DeviceCode, *resty.Response, error) {
+func (s *DevicesService) CreateDeviceActivationCode(deviceCodeRequest *DeviceCodeRequest) (*DeviceCode, *resty.Response, error) {
 
 	path := "/devices/activationCode"
 
