@@ -24,6 +24,7 @@ type Client struct {
 	Messages        *MessagesService
 	Organizations   *OrganizationsService
 	People          *PeopleService
+	Recordings      *RecordingsService
 	Roles           *RolesService
 	Rooms           *RoomsService
 	TeamMemberships *TeamMembershipsService
@@ -59,6 +60,7 @@ func NewClient() *Client {
 	c.Messages = (*MessagesService)(&c.common)
 	c.Organizations = (*OrganizationsService)(&c.common)
 	c.People = (*PeopleService)(&c.common)
+	c.Recordings = (*RecordingsService)(&c.common)
 	c.Roles = (*RolesService)(&c.common)
 	c.Rooms = (*RoomsService)(&c.common)
 	c.TeamMemberships = (*TeamMembershipsService)(&c.common)
