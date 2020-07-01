@@ -9,7 +9,7 @@ import (
 // RestyClient is the REST Client
 var RestyClient *resty.Client
 
-const apiURL = "https://api.ciscospark.com/v1"
+const apiURL = "https://webexapis.com/v1"
 
 // Client manages communication with the Webex Teams API API v1.0.0
 // In most cases there should be only one, shared, APIClient.
