@@ -28,7 +28,7 @@ type PlaceUpdateRequest struct {
 type Place struct {
 	ID           string    `json:"id,omitempty"`           // Place ID.
 	Title        string    `json:"title,omitempty"`        // Place title.
-	PlaceType     string    `json:"type,omitempty"`         // Place type (group or direct).
+	PlaceType    string    `json:"type,omitempty"`         // Place type (group or direct).
 	IsLocked     bool      `json:"isLocked,omitempty"`     // Place is moderated.
 	TeamID       string    `json:"teamId,omitempty"`       // Place Team ID.
 	CreatorID    string    `json:"creatorId,omitempty"`    // Place creator Person ID.
@@ -55,6 +55,7 @@ func placesPagination(linkHeader string, size, max int) *Places {
 
 			response, err := RestyClient.R().
 				SetResult(&Places{}).
+				SetError(&Error{}).
 				Get(l.URI)
 
 			if err != nil {
@@ -96,6 +97,7 @@ func (s *PlacesService) CreatePlace(placeCreateRequest *PlaceCreateRequest) (*Pl
 	response, err := RestyClient.R().
 		SetBody(placeCreateRequest).
 		SetResult(&Place{}).
+		SetError(&Error{}).
 		Post(path)
 
 	if err != nil {
@@ -146,6 +148,7 @@ func (s *PlacesService) GetPlace(placeID string) (*Place, *resty.Response, error
 
 	response, err := RestyClient.R().
 		SetResult(&Place{}).
+		SetError(&Error{}).
 		Get(path)
 
 	if err != nil {
@@ -159,11 +162,11 @@ func (s *PlacesService) GetPlace(placeID string) (*Place, *resty.Response, error
 
 // ListPlacesQueryParams are the query params for the ListPlaces API Call
 type ListPlacesQueryParams struct {
-	TeamID   string `url:"teamId,omitempty"` // Limit the places to those associated with a team, by ID.
+	TeamID    string `url:"teamId,omitempty"` // Limit the places to those associated with a team, by ID.
 	PlaceType string `url:"type,omitempty"`   // direct returns all 1-to-1 places. group returns all group places.
-	SortBy   string `url:"sortBy,omitempty"` // Sort results by place ID (id), most recent activity (lastactivity), or most recently created (created).
-	Max      int    `url:"max,omitempty"`    // Limit the maximum number of items in the response.
-	Paginate bool   // Indicates if pagination is needed
+	SortBy    string `url:"sortBy,omitempty"` // Sort results by place ID (id), most recent activity (lastactivity), or most recently created (created).
+	Max       int    `url:"max,omitempty"`    // Limit the maximum number of items in the response.
+	Paginate  bool   // Indicates if pagination is needed
 }
 
 // ListPlaces List places.
@@ -229,6 +232,7 @@ func (s *PlacesService) UpdatePlace(placeID string, placeUpdateRequest *PlaceUpd
 	response, err := RestyClient.R().
 		SetBody(placeUpdateRequest).
 		SetResult(&Place{}).
+		SetError(&Error{}).
 		Put(path)
 
 	if err != nil {

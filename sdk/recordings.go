@@ -67,6 +67,7 @@ func recordingsPagination(linkHeader string, size, max int) *Recordings {
 		if l.Rel == "next" {
 			response, err := RestyClient.R().
 				SetResult(&Recordings{}).
+				SetError(&Error{}).
 				Get(l.URI)
 
 			if err != nil {
@@ -122,6 +123,7 @@ func (s *RecordingsService) ListRecordings(queryParams *ListRecordingsQueryParam
 	response, err := RestyClient.R().
 		SetQueryString(queryParamsString.Encode()).
 		SetResult(&Recordings{}).
+		SetError(&Error{}).
 		Get(path)
 
 	if err != nil {
@@ -158,6 +160,7 @@ func (s *RecordingsService) GetRecording(recordingID string) (*RecordingDetails,
 
 	response, err := RestyClient.R().
 		SetResult(&RecordingDetails{}).
+		SetError(&Error{}).
 		Get(path)
 
 	if err != nil {

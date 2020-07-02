@@ -50,6 +50,7 @@ func teamsPagination(linkHeader string, size, max int) *Teams {
 
 			response, err := RestyClient.R().
 				SetResult(&Teams{}).
+				SetError(&Error{}).
 				Get(l.URI)
 
 			if err != nil {
@@ -91,6 +92,7 @@ func (s *TeamsService) CreateTeam(teamCreateRequest *TeamCreateRequest) (*Team, 
 	response, err := RestyClient.R().
 		SetBody(teamCreateRequest).
 		SetResult(&Team{}).
+		SetError(&Error{}).
 		Post(path)
 
 	if err != nil {
@@ -115,6 +117,7 @@ func (s *TeamsService) DeleteTeam(teamID string) (*resty.Response, error) {
 	path = strings.Replace(path, "{"+"teamId"+"}", fmt.Sprintf("%v", teamID), -1)
 
 	response, err := RestyClient.R().
+		SetError(&Error{}).
 		Delete(path)
 
 	if err != nil {
@@ -139,6 +142,7 @@ func (s *TeamsService) GetTeam(teamID string) (*Team, *resty.Response, error) {
 
 	response, err := RestyClient.R().
 		SetResult(&Team{}).
+		SetError(&Error{}).
 		Get(path)
 
 	if err != nil {
@@ -171,6 +175,7 @@ func (s *TeamsService) ListTeams(queryParams *ListTeamsQueryParams) (*Teams, *re
 	response, err := RestyClient.R().
 		SetQueryString(queryParamsString.Encode()).
 		SetResult(&Teams{}).
+		SetError(&Error{}).
 		Get(path)
 
 	if err != nil {
@@ -211,6 +216,7 @@ func (s *TeamsService) UpdateTeam(teamID string, teamUpdateRequest *TeamUpdateRe
 	response, err := RestyClient.R().
 		SetBody(teamUpdateRequest).
 		SetResult(&Team{}).
+		SetError(&Error{}).
 		Put(path)
 
 	if err != nil {

@@ -56,6 +56,7 @@ func teamMembershipsPagination(linkHeader string, size, max int) *TeamMembership
 
 			response, err := RestyClient.R().
 				SetResult(&TeamMemberships{}).
+				SetError(&Error{}).
 				Get(l.URI)
 
 			if err != nil {
@@ -95,6 +96,7 @@ func (s *TeamMembershipsService) CreateTeamMembership(teamMemberhipCreateRequest
 	response, err := RestyClient.R().
 		SetBody(teamMemberhipCreateRequest).
 		SetResult(&TeamMembership{}).
+		SetError(&Error{}).
 		Post(path)
 
 	if err != nil {
@@ -119,6 +121,7 @@ func (s *TeamMembershipsService) DeleteTeamMembership(membershipID string) (*res
 	path = strings.Replace(path, "{"+"membershipId"+"}", fmt.Sprintf("%v", membershipID), -1)
 
 	response, err := RestyClient.R().
+		SetError(&Error{}).
 		Delete(path)
 
 	if err != nil {
@@ -143,6 +146,7 @@ func (s *TeamMembershipsService) GetTeamMembership(membershipID string) (*TeamMe
 
 	response, err := RestyClient.R().
 		SetResult(&TeamMembership{}).
+		SetError(&Error{}).
 		Get(path)
 
 	if err != nil {
@@ -179,6 +183,7 @@ func (s *TeamMembershipsService) ListTeamMemberhips(queryParams *ListTeamMemberh
 	response, err := RestyClient.R().
 		SetQueryString(queryParamsString.Encode()).
 		SetResult(&TeamMemberships{}).
+		SetError(&Error{}).
 		Get(path)
 
 	if err != nil {
@@ -219,6 +224,7 @@ func (s *TeamMembershipsService) UpdateTeamMembership(membershipID string, teamM
 	response, err := RestyClient.R().
 		SetBody(teamMembershipUpdateRequest).
 		SetResult(&TeamMembership{}).
+		SetError(&Error{}).
 		Put(path)
 
 	if err != nil {

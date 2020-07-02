@@ -37,6 +37,7 @@ func rolesPagination(linkHeader string, size, max int) *Roles {
 
 			response, err := RestyClient.R().
 				SetResult(&Roles{}).
+				SetError(&Error{}).
 				Get(l.URI)
 
 			if err != nil {
@@ -78,6 +79,7 @@ func (s *RolesService) GetRole(roleID string) (*Role, *resty.Response, error) {
 
 	response, err := RestyClient.R().
 		SetResult(&Role{}).
+		SetError(&Error{}).
 		Get(path)
 
 	if err != nil {
@@ -110,6 +112,7 @@ func (s *RolesService) ListRoles(queryParams *RolesListQueryParams) (*Roles, *re
 	response, err := RestyClient.R().
 		SetQueryString(queryParamsString.Encode()).
 		SetResult(&Roles{}).
+		SetError(&Error{}).
 		Get(path)
 
 	if err != nil {

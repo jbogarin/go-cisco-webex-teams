@@ -69,3 +69,7 @@ func NewClient() *Client {
 
 	return c
 }
+
+// Error indicates an error from the invocation of a Webex API. See
+// the following documentation for error context: https://developer.webex.com/docs/api/basics#api-errors.
+type Error struct{}
