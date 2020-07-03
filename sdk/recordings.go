@@ -3,6 +3,7 @@ package webexteams
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/google/go-querystring/query"
@@ -19,16 +20,16 @@ type Recordings struct {
 
 // Recording is the Recording definition
 type Recording struct {
-	ID              string `json:"id,omitempty"`              // A unique identifier for recording.
-	Topic           string `json:"topic,omitempty"`           //The recording's topic.
-	CreateTime      string `json:"createTime,omitempty"`      // The date and time recording was created in ISO 8601 compliant format.
-	DownloadURL     string `json:"downloadUrl,omitempty"`     // The download link for recording.
-	PlaybackURL     string `json:"playbackUrl,omitempty"`     // The playback link for recording.
-	Password        string `json:"password,omitempty"`        // The recording's password.
-	Format          string `json:"format,omitempty"`          // MP4 or ARF
-	DurationSeconds int    `json:"durationSeconds,omitempty"` // The duration of the recording, in seconds.
-	SizeBytes       int    `json:"sizeBytes,omitempty"`       // The size of the recording file, in bytes.
-	ShareToMe       bool   `json:"shareToMe,omitempty"`       // Whether or not the recording has been shared to the current user.
+	ID              string    `json:"id,omitempty"`              // A unique identifier for recording.
+	Topic           string    `json:"topic,omitempty"`           //The recording's topic.
+	CreateTime      time.Time `json:"createTime,omitempty"`      // The date and time recording was created in ISO 8601 compliant format.
+	DownloadURL     string    `json:"downloadUrl,omitempty"`     // The download link for recording.
+	PlaybackURL     string    `json:"playbackUrl,omitempty"`     // The playback link for recording.
+	Password        string    `json:"password,omitempty"`        // The recording's password.
+	Format          string    `json:"format,omitempty"`          // MP4 or ARF
+	DurationSeconds int       `json:"durationSeconds,omitempty"` // The duration of the recording, in seconds.
+	SizeBytes       int       `json:"sizeBytes,omitempty"`       // The size of the recording file, in bytes.
+	ShareToMe       bool      `json:"shareToMe,omitempty"`       // Whether or not the recording has been shared to the current user.
 }
 
 // TemporaryDirectDownloadLinks definition
@@ -43,7 +44,7 @@ type TemporaryDirectDownloadLinks struct {
 type RecordingDetails struct {
 	ID                           string                       `json:"id,omitempty"`                           // A unique identifier for recording.
 	Topic                        string                       `json:"topic,omitempty"`                        //The recording's topic.
-	CreateTime                   string                       `json:"createTime,omitempty"`                   // The date and time recording was created in ISO 8601 compliant format.
+	CreateTime                   time.Time                    `json:"createTime,omitempty"`                   // The date and time recording was created in ISO 8601 compliant format.
 	DownloadURL                  string                       `json:"downloadUrl,omitempty"`                  // The download link for recording.
 	PlaybackURL                  string                       `json:"playbackUrl,omitempty"`                  // The playback link for recording.
 	Password                     string                       `json:"password,omitempty"`                     // The recording's password.
