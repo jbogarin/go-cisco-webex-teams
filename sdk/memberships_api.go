@@ -58,6 +58,7 @@ func membershipsPagination(linkHeader string, size, max int) *Memberships {
 
 			response, err := RestyClient.R().
 				SetResult(&Memberships{}).
+				SetError(&Error{}).
 				Get(l.URI)
 
 			if err != nil {
@@ -97,6 +98,7 @@ func (s *MembershipsService) CreateMembership(membershipCreateRequest *Membershi
 	response, err := RestyClient.R().
 		SetBody(membershipCreateRequest).
 		SetResult(&Membership{}).
+		SetError(&Error{}).
 		Post(path)
 
 	if err != nil {
@@ -121,6 +123,7 @@ func (s *MembershipsService) DeleteMembership(membershipID string) (*resty.Respo
 	path = strings.Replace(path, "{"+"membershipId"+"}", fmt.Sprintf("%v", membershipID), -1)
 
 	response, err := RestyClient.R().
+		SetError(&Error{}).
 		Delete(path)
 
 	if err != nil {
@@ -145,6 +148,7 @@ func (s *MembershipsService) GetMembership(membershipID string) (*Membership, *r
 
 	response, err := RestyClient.R().
 		SetResult(&Membership{}).
+		SetError(&Error{}).
 		Get(path)
 
 	if err != nil {
@@ -188,6 +192,7 @@ func (s *MembershipsService) ListMemberships(queryParams *ListMembershipsQueryPa
 	response, err := RestyClient.R().
 		SetQueryString(queryParamsString.Encode()).
 		SetResult(&Memberships{}).
+		SetError(&Error{}).
 		Get(path)
 
 	if err != nil {
@@ -229,6 +234,7 @@ func (s *MembershipsService) UpdateMembership(membershipID string, membershipUpd
 	response, err := RestyClient.R().
 		SetBody(membershipUpdateRequest).
 		SetResult(&Membership{}).
+		SetError(&Error{}).
 		Put(path)
 
 	if err != nil {

@@ -67,6 +67,7 @@ func devicesPagination(linkHeader string, size, max int) *Devices {
 		if l.Rel == "next" {
 			response, err := RestyClient.R().
 				SetResult(&Devices{}).
+				SetError(&Error{}).
 				Get(l.URI)
 
 			if err != nil {
@@ -108,6 +109,7 @@ func (s *DevicesService) CreateDeviceActivationCode(deviceCodeRequest *DeviceCod
 	response, err := RestyClient.R().
 		SetBody(deviceCodeRequest).
 		SetResult(&DeviceCode{}).
+		SetError(&Error{}).
 		Post(path)
 
 	if err != nil {
@@ -132,6 +134,7 @@ func (s *DevicesService) DeleteDevice(deviceID string) (*resty.Response, error) 
 	path = strings.Replace(path, "{"+"deviceId"+"}", fmt.Sprintf("%v", deviceID), -1)
 
 	response, err := RestyClient.R().
+		SetError(&Error{}).
 		Delete(path)
 
 	if err != nil {
@@ -154,6 +157,7 @@ func (s *DevicesService) GetDevice(deviceID string) (*Device, *resty.Response, e
 
 	response, err := RestyClient.R().
 		SetResult(&Device{}).
+		SetError(&Error{}).
 		Get(path)
 
 	if err != nil {
@@ -215,6 +219,7 @@ func (s *DevicesService) ListDevices(queryParams *ListDevicesQueryParams) (*Devi
 	response, err := RestyClient.R().
 		SetQueryString(queryParamsString.Encode()).
 		SetResult(&Devices{}).
+		SetError(&Error{}).
 		Get(path)
 
 	if err != nil {

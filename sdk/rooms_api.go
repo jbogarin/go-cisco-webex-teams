@@ -55,6 +55,7 @@ func roomsPagination(linkHeader string, size, max int) *Rooms {
 
 			response, err := RestyClient.R().
 				SetResult(&Rooms{}).
+				SetError(&Error{}).
 				Get(l.URI)
 
 			if err != nil {
@@ -96,6 +97,7 @@ func (s *RoomsService) CreateRoom(roomCreateRequest *RoomCreateRequest) (*Room, 
 	response, err := RestyClient.R().
 		SetBody(roomCreateRequest).
 		SetResult(&Room{}).
+		SetError(&Error{}).
 		Post(path)
 
 	if err != nil {
@@ -121,6 +123,7 @@ func (s *RoomsService) DeleteRoom(roomID string) (*resty.Response, error) {
 	path = strings.Replace(path, "{"+"roomId"+"}", fmt.Sprintf("%v", roomID), -1)
 
 	response, err := RestyClient.R().
+		SetError(&Error{}).
 		Delete(path)
 
 	if err != nil {
@@ -146,6 +149,7 @@ func (s *RoomsService) GetRoom(roomID string) (*Room, *resty.Response, error) {
 
 	response, err := RestyClient.R().
 		SetResult(&Room{}).
+		SetError(&Error{}).
 		Get(path)
 
 	if err != nil {
@@ -188,6 +192,7 @@ func (s *RoomsService) ListRooms(queryParams *ListRoomsQueryParams) (*Rooms, *re
 	response, err := RestyClient.R().
 		SetQueryString(queryParamsString.Encode()).
 		SetResult(&Rooms{}).
+		SetError(&Error{}).
 		Get(path)
 
 	if err != nil {
@@ -229,6 +234,7 @@ func (s *RoomsService) UpdateRoom(roomID string, roomUpdateRequest *RoomUpdateRe
 	response, err := RestyClient.R().
 		SetBody(roomUpdateRequest).
 		SetResult(&Room{}).
+		SetError(&Error{}).
 		Put(path)
 
 	if err != nil {

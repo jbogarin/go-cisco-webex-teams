@@ -39,6 +39,7 @@ func organizationsPagination(linkHeader string, size, max int) *Organizations {
 
 			response, err := RestyClient.R().
 				SetResult(&Organizations{}).
+				SetError(&Error{}).
 				Get(l.URI)
 
 			if err != nil {
@@ -80,6 +81,7 @@ func (s *OrganizationsService) GetOrganization(orgID string) (*Organization, *re
 
 	response, err := RestyClient.R().
 		SetResult(&Organization{}).
+		SetError(&Error{}).
 		Get(path)
 
 	if err != nil {
@@ -112,6 +114,7 @@ func (s *OrganizationsService) ListOrganizations(queryParams *ListOrganizationsQ
 	response, err := RestyClient.R().
 		SetQueryString(queryParamsString.Encode()).
 		SetResult(&Organizations{}).
+		SetError(&Error{}).
 		Get(path)
 
 	if err != nil {
