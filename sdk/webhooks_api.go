@@ -92,6 +92,7 @@ func webhooksPagination(linkHeader string, size, max int) *Webhooks {
 
 			response, err := RestyClient.R().
 				SetResult(&Webhooks{}).
+				SetError(&Error{}).
 				Get(l.URI)
 
 			if err != nil {
@@ -131,6 +132,7 @@ func (s *WebhooksService) CreateWebhook(webhookCreateRequest *WebhookCreateReque
 	response, err := RestyClient.R().
 		SetBody(webhookCreateRequest).
 		SetResult(&Webhook{}).
+		SetError(&Error{}).
 		Post(path)
 
 	if err != nil {
@@ -155,6 +157,7 @@ func (s *WebhooksService) DeleteWebhook(webhookID string) (*resty.Response, erro
 	path = strings.Replace(path, "{"+"webhookId"+"}", fmt.Sprintf("%v", webhookID), -1)
 
 	response, err := RestyClient.R().
+		SetError(&Error{}).
 		Delete(path)
 
 	if err != nil {
@@ -179,6 +182,7 @@ func (s *WebhooksService) GetWebhook(webhookID string) (*Webhook, *resty.Respons
 
 	response, err := RestyClient.R().
 		SetResult(&Webhook{}).
+		SetError(&Error{}).
 		Get(path)
 
 	if err != nil {
@@ -211,6 +215,7 @@ func (s *WebhooksService) ListWebhooks(queryParams *ListWebhooksQueryParams) (*W
 	response, err := RestyClient.R().
 		SetQueryString(queryParamsString.Encode()).
 		SetResult(&Webhooks{}).
+		SetError(&Error{}).
 		Get(path)
 
 	if err != nil {
@@ -252,6 +257,7 @@ func (s *WebhooksService) UpdateWebhook(webhookID string, webhookUpdateRequest *
 	response, err := RestyClient.R().
 		SetBody(webhookUpdateRequest).
 		SetResult(&Webhook{}).
+		SetError(&Error{}).
 		Put(path)
 
 	if err != nil {

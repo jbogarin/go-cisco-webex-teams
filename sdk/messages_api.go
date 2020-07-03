@@ -32,6 +32,7 @@ type Message struct {
 	ToPersonEmail   string    `json:"toPersonEmail,omitempty"`   // Person email (for type=direct).
 	Text            string    `json:"text,omitempty"`            // Message in plain text format.
 	Markdown        string    `json:"markdown,omitempty"`        // Message in markdown format.
+	Html            string    `json:"html,omitempty"`            // Message in HTML format.
 	Files           []string  `json:"files,omitempty"`           // File URL array.
 	PersonID        string    `json:"personId,omitempty"`        // Person ID.
 	PersonEmail     string    `json:"personEmail,omitempty"`     // Person Email.
@@ -59,6 +60,7 @@ func messagesPagination(linkHeader string, size, max int) *Messages {
 
 			response, err := RestyClient.R().
 				SetResult(&Messages{}).
+				SetError(&Error{}).
 				Get(l.URI)
 
 			if err != nil {
@@ -100,6 +102,7 @@ func (s *MessagesService) CreateMessage(messageCreateRequest *MessageCreateReque
 	response, err := RestyClient.R().
 		SetBody(messageCreateRequest).
 		SetResult(&Message{}).
+		SetError(&Error{}).
 		Post(path)
 
 	if err != nil {
@@ -122,6 +125,7 @@ func (s *MessagesService) DeleteMessage(messageID string) (*resty.Response, erro
 	path = strings.Replace(path, "{"+"messageId"+"}", fmt.Sprintf("%v", messageID), -1)
 
 	response, err := RestyClient.R().
+		SetError(&Error{}).
 		Delete(path)
 
 	if err != nil {
@@ -146,6 +150,7 @@ func (s *MessagesService) GetMessage(messageID string) (*Message, *resty.Respons
 
 	response, err := RestyClient.R().
 		SetResult(&Message{}).
+		SetError(&Error{}).
 		Get(path)
 
 	if err != nil {
@@ -189,6 +194,7 @@ func (s *MessagesService) ListMessages(queryParams *ListMessagesQueryParams) (*M
 	response, err := RestyClient.R().
 		SetQueryString(queryParamsString.Encode()).
 		SetResult(&Messages{}).
+		SetError(&Error{}).
 		Get(path)
 
 	if err != nil {

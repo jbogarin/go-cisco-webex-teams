@@ -39,6 +39,7 @@ func licensesPagination(linkHeader string, size, max int) *Licenses {
 
 			response, err := RestyClient.R().
 				SetResult(&Licenses{}).
+				SetError(&Error{}).
 				Get(l.URI)
 
 			if err != nil {
@@ -80,6 +81,7 @@ func (s *LicensesService) GetLicense(licenseID string) (*License, *resty.Respons
 
 	response, err := RestyClient.R().
 		SetResult(&License{}).
+		SetError(&Error{}).
 		Get(path)
 
 	if err != nil {
@@ -114,6 +116,7 @@ func (s *LicensesService) ListLicenses(queryParams *ListLicensesQueryParams) (*L
 	response, err := RestyClient.R().
 		SetQueryString(queryParamsString.Encode()).
 		SetResult(&Licenses{}).
+		SetError(&Error{}).
 		Get(path)
 
 	if err != nil {

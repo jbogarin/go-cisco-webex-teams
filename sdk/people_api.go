@@ -80,6 +80,7 @@ func peoplePagination(linkHeader string, size, max int) *People {
 		if l.Rel == "next" {
 			response, err := RestyClient.R().
 				SetResult(&People{}).
+				SetError(&Error{}).
 				Get(l.URI)
 
 			if err != nil {
@@ -121,6 +122,7 @@ func (s *PeopleService) CreatePerson(personRequest *PersonRequest) (*Person, *re
 	response, err := RestyClient.R().
 		SetBody(personRequest).
 		SetResult(&Person{}).
+		SetError(&Error{}).
 		Post(path)
 
 	if err != nil {
@@ -145,6 +147,7 @@ func (s *PeopleService) DeletePerson(personID string) (*resty.Response, error) {
 	path = strings.Replace(path, "{"+"personId"+"}", fmt.Sprintf("%v", personID), -1)
 
 	response, err := RestyClient.R().
+		SetError(&Error{}).
 		Delete(path)
 
 	if err != nil {
@@ -165,6 +168,7 @@ func (s *PeopleService) GetMe() (*Person, *resty.Response, error) {
 
 	response, err := RestyClient.R().
 		SetResult(&Person{}).
+		SetError(&Error{}).
 		Get(path)
 
 	if err != nil {
@@ -190,6 +194,7 @@ func (s *PeopleService) GetPerson(personID string) (*Person, *resty.Response, er
 
 	response, err := RestyClient.R().
 		SetResult(&Person{}).
+		SetError(&Error{}).
 		Get(path)
 
 	if err != nil {
@@ -232,6 +237,7 @@ func (s *PeopleService) ListPeople(queryParams *ListPeopleQueryParams) (*People,
 	response, err := RestyClient.R().
 		SetQueryString(queryParamsString.Encode()).
 		SetResult(&People{}).
+		SetError(&Error{}).
 		Get(path)
 
 	if err != nil {
@@ -273,6 +279,7 @@ func (s *PeopleService) Update(personID string, personRequest *PersonRequest) (*
 	response, err := RestyClient.R().
 		SetBody(personRequest).
 		SetResult(&Person{}).
+		SetError(&Error{}).
 		Put(path)
 
 	if err != nil {

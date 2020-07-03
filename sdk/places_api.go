@@ -55,6 +55,7 @@ func placesPagination(linkHeader string, size, max int) *Places {
 
 			response, err := RestyClient.R().
 				SetResult(&Places{}).
+				SetError(&Error{}).
 				Get(l.URI)
 
 			if err != nil {
@@ -96,6 +97,7 @@ func (s *PlacesService) CreatePlace(placeCreateRequest *PlaceCreateRequest) (*Pl
 	response, err := RestyClient.R().
 		SetBody(placeCreateRequest).
 		SetResult(&Place{}).
+		SetError(&Error{}).
 		Post(path)
 
 	if err != nil {
@@ -146,6 +148,7 @@ func (s *PlacesService) GetPlace(placeID string) (*Place, *resty.Response, error
 
 	response, err := RestyClient.R().
 		SetResult(&Place{}).
+		SetError(&Error{}).
 		Get(path)
 
 	if err != nil {
@@ -229,6 +232,7 @@ func (s *PlacesService) UpdatePlace(placeID string, placeUpdateRequest *PlaceUpd
 	response, err := RestyClient.R().
 		SetBody(placeUpdateRequest).
 		SetResult(&Place{}).
+		SetError(&Error{}).
 		Put(path)
 
 	if err != nil {
