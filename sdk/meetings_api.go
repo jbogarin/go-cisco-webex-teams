@@ -38,8 +38,15 @@ type MeetingCreateRequest struct {
 type MeetingTelephony struct {
 	AccessCode    string `json:"accessCode,omitempty"`
 	CallInNumbers struct {
+		Label        string `json:"label,omitempty"`
+		CallInNumber string `json:"callInNumber,omitempty"`
+		TollType     string `json:"tollType,omitempty"`
 	} `json:",omitempty"`
-	Links struct{} `json:"links,omitempty"`
+	Links struct {
+		Rel    string `json:"rel,omitempty"`
+		HREF   string `json:"href,omitempty"`
+		Method string `json:"method,omitempty"`
+	} `json:"links,omitempty"`
 }
 
 // Meeting is the Meeting definition
@@ -87,6 +94,7 @@ func meetingsPagination(linkHeader string, size, max int) *Meetings {
 
 			response, err := RestyClient.R().
 				SetResult(&Meetings{}).
+				SetError(&Error{}).
 				Get(l.URI)
 
 			if err != nil {
@@ -128,6 +136,7 @@ func (s *MeetingsService) CreateMeeting(meetingCreateRequest *MeetingCreateReque
 	response, err := RestyClient.R().
 		SetBody(meetingCreateRequest).
 		SetResult(&Meeting{}).
+		SetError(&Error{}).
 		Post(path)
 
 	if err != nil {
@@ -150,6 +159,7 @@ func (s *MeetingsService) DeleteMeeting(meetingID string) (*resty.Response, erro
 	path = strings.Replace(path, "{"+"meetingId"+"}", fmt.Sprintf("%v", meetingID), -1)
 
 	response, err := RestyClient.R().
+		SetError(&Error{}).
 		Delete(path)
 
 	if err != nil {
@@ -174,6 +184,7 @@ func (s *MeetingsService) GetMeeting(meetingID string) (*Meeting, *resty.Respons
 
 	response, err := RestyClient.R().
 		SetResult(&Meeting{}).
+		SetError(&Error{}).
 		Get(path)
 
 	if err != nil {
@@ -217,6 +228,7 @@ func (s *MeetingsService) ListMeetings(queryParams *ListMeetingsQueryParams) (*M
 	response, err := RestyClient.R().
 		SetQueryString(queryParamsString.Encode()).
 		SetResult(&Meetings{}).
+		SetError(&Error{}).
 		Get(path)
 
 	if err != nil {

@@ -187,6 +187,7 @@ func (s *RecordingsService) DeleteRecording(recordingID string) (*resty.Response
 	path = strings.Replace(path, "{"+"recordingId"+"}", fmt.Sprintf("%v", recordingID), -1)
 
 	response, err := RestyClient.R().
+		SetError(&Error{}).
 		Delete(path)
 
 	if err != nil {
