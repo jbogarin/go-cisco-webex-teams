@@ -1,6 +1,6 @@
 # \PeopleApi
 
-All URIs are relative to *https://api.ciscospark.com/v1*
+All URIs are relative to *https://webexapis.com/v1*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
