@@ -13,6 +13,11 @@ import (
 // MessagesService is the service to communicate with the Messages API endpoint
 type MessagesService service
 
+type Attachment struct {
+	Content map[string]interface{} `json:"content"`
+	ContentType string `json:"contentType"`
+
+}
 // MessageCreateRequest is the Create Message Request Parameters
 type MessageCreateRequest struct {
 	RoomID        string   `json:"roomId,omitempty"`        // Room ID.
@@ -21,6 +26,7 @@ type MessageCreateRequest struct {
 	Text          string   `json:"text,omitempty"`          // Message in plain text format.
 	Markdown      string   `json:"markdown,omitempty"`      // Message in markdown format.
 	Files         []string `json:"files,omitempty"`         // File URL array.
+	Attachments   []Attachment `json:"attachments,omitempty"`  //Attachment Array
 }
 
 // Message is the Message definition
@@ -39,6 +45,7 @@ type Message struct {
 	Created         time.Time `json:"created,omitempty"`         // Message creation date/time.
 	MentionedPeople []string  `json:"mentionedPeople,omitempty"` // Person ID array.
 	MentionedGroups []string  `json:"mentionedGroups,omitempty"` // Groups array.
+	Attachments     []Attachment `json:"attachments,omitempty"`  // Attachment array
 }
 
 // Messages is the List of Messages
