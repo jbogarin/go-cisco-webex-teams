@@ -13,39 +13,40 @@ import (
 // MessagesService is the service to communicate with the Messages API endpoint
 type MessagesService service
 
+// Attachment is the object to manage attachments in messages
 type Attachment struct {
-	Content map[string]interface{} `json:"content"`
-	ContentType string `json:"contentType"`
-
+	Content     map[string]interface{} `json:"content"`
+	ContentType string                 `json:"contentType"`
 }
+
 // MessageCreateRequest is the Create Message Request Parameters
 type MessageCreateRequest struct {
-	RoomID        string   `json:"roomId,omitempty"`        // Room ID.
-	ToPersonID    string   `json:"toPersonId,omitempty"`    // Person ID (for type=direct).
-	ToPersonEmail string   `json:"toPersonEmail,omitempty"` // Person email (for type=direct).
-	Text          string   `json:"text,omitempty"`          // Message in plain text format.
-	Markdown      string   `json:"markdown,omitempty"`      // Message in markdown format.
-	Files         []string `json:"files,omitempty"`         // File URL array.
-	Attachments   []Attachment `json:"attachments,omitempty"`  //Attachment Array
+	RoomID        string       `json:"roomId,omitempty"`        // Room ID.
+	ToPersonID    string       `json:"toPersonId,omitempty"`    // Person ID (for type=direct).
+	ToPersonEmail string       `json:"toPersonEmail,omitempty"` // Person email (for type=direct).
+	Text          string       `json:"text,omitempty"`          // Message in plain text format.
+	Markdown      string       `json:"markdown,omitempty"`      // Message in markdown format.
+	Files         []string     `json:"files,omitempty"`         // File URL array.
+	Attachments   []Attachment `json:"attachments,omitempty"`   //Attachment Array
 }
 
 // Message is the Message definition
 type Message struct {
-	ID              string    `json:"id,omitempty"`              // Message ID.
-	RoomID          string    `json:"roomId,omitempty"`          // Room ID.
-	RoomType        string    `json:"roomType,omitempty"`        // Room type (group or direct).
-	ToPersonID      string    `json:"toPersonId,omitempty"`      // Person ID (for type=direct).
-	ToPersonEmail   string    `json:"toPersonEmail,omitempty"`   // Person email (for type=direct).
-	Text            string    `json:"text,omitempty"`            // Message in plain text format.
-	Markdown        string    `json:"markdown,omitempty"`        // Message in markdown format.
-	HTML            string    `json:"html,omitempty"`            // Message in HTML format.
-	Files           []string  `json:"files,omitempty"`           // File URL array.
-	PersonID        string    `json:"personId,omitempty"`        // Person ID.
-	PersonEmail     string    `json:"personEmail,omitempty"`     // Person Email.
-	Created         time.Time `json:"created,omitempty"`         // Message creation date/time.
-	MentionedPeople []string  `json:"mentionedPeople,omitempty"` // Person ID array.
-	MentionedGroups []string  `json:"mentionedGroups,omitempty"` // Groups array.
-	Attachments     []Attachment `json:"attachments,omitempty"`  // Attachment array
+	ID              string       `json:"id,omitempty"`              // Message ID.
+	RoomID          string       `json:"roomId,omitempty"`          // Room ID.
+	RoomType        string       `json:"roomType,omitempty"`        // Room type (group or direct).
+	ToPersonID      string       `json:"toPersonId,omitempty"`      // Person ID (for type=direct).
+	ToPersonEmail   string       `json:"toPersonEmail,omitempty"`   // Person email (for type=direct).
+	Text            string       `json:"text,omitempty"`            // Message in plain text format.
+	Markdown        string       `json:"markdown,omitempty"`        // Message in markdown format.
+	HTML            string       `json:"html,omitempty"`            // Message in HTML format.
+	Files           []string     `json:"files,omitempty"`           // File URL array.
+	PersonID        string       `json:"personId,omitempty"`        // Person ID.
+	PersonEmail     string       `json:"personEmail,omitempty"`     // Person Email.
+	Created         time.Time    `json:"created,omitempty"`         // Message creation date/time.
+	MentionedPeople []string     `json:"mentionedPeople,omitempty"` // Person ID array.
+	MentionedGroups []string     `json:"mentionedGroups,omitempty"` // Groups array.
+	Attachments     []Attachment `json:"attachments,omitempty"`     // Attachment array
 }
 
 // Messages is the List of Messages
