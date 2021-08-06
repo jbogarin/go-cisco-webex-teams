@@ -73,12 +73,12 @@ func (people *People) AddPerson(item Person) []Person {
 	return people.Items
 }
 
-func peoplePagination(linkHeader string, size, max int) *People {
+func (s *PeopleService) peoplePagination(linkHeader string, size, max int) *People {
 	items := &People{}
 
 	for _, l := range link.Parse(linkHeader) {
 		if l.Rel == "next" {
-			response, err := RestyClient.R().
+			response, err := s.client.R().
 				SetResult(&People{}).
 				SetError(&Error{}).
 				Get(l.URI)
@@ -90,13 +90,13 @@ func peoplePagination(linkHeader string, size, max int) *People {
 			if size != 0 {
 				size = size + len(items.Items)
 				if size < max {
-					people := peoplePagination(response.Header().Get("Link"), size, max)
+					people := s.peoplePagination(response.Header().Get("Link"), size, max)
 					for _, person := range people.Items {
 						items.AddPerson(person)
 					}
 				}
 			} else {
-				people := peoplePagination(response.Header().Get("Link"), size, max)
+				people := s.peoplePagination(response.Header().Get("Link"), size, max)
 				for _, person := range people.Items {
 					items.AddPerson(person)
 				}
@@ -119,7 +119,7 @@ func (s *PeopleService) CreatePerson(personRequest *PersonRequest) (*Person, *re
 
 	path := "/people/"
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetBody(personRequest).
 		SetResult(&Person{}).
 		SetError(&Error{}).
@@ -146,7 +146,7 @@ func (s *PeopleService) DeletePerson(personID string) (*resty.Response, error) {
 	path := "/people/{personId}"
 	path = strings.Replace(path, "{"+"personId"+"}", fmt.Sprintf("%v", personID), -1)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetError(&Error{}).
 		Delete(path)
 
@@ -166,7 +166,7 @@ func (s *PeopleService) GetMe() (*Person, *resty.Response, error) {
 
 	path := "/people/me"
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetResult(&Person{}).
 		SetError(&Error{}).
 		Get(path)
@@ -192,7 +192,7 @@ func (s *PeopleService) GetPerson(personID string) (*Person, *resty.Response, er
 	path := "/people/{personId}"
 	path = strings.Replace(path, "{"+"personId"+"}", fmt.Sprintf("%v", personID), -1)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetResult(&Person{}).
 		SetError(&Error{}).
 		Get(path)
@@ -234,7 +234,7 @@ func (s *PeopleService) ListPeople(queryParams *ListPeopleQueryParams) (*People,
 
 	queryParamsString, _ := query.Values(queryParams)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetQueryString(queryParamsString.Encode()).
 		SetResult(&People{}).
 		SetError(&Error{}).
@@ -245,14 +245,14 @@ func (s *PeopleService) ListPeople(queryParams *ListPeopleQueryParams) (*People,
 	}
 
 	result := response.Result().(*People)
-	if queryParams.Paginate == true {
-		items := peoplePagination(response.Header().Get("Link"), 0, 0)
+	if queryParams.Paginate {
+		items := s.peoplePagination(response.Header().Get("Link"), 0, 0)
 		for _, person := range items.Items {
 			result.AddPerson(person)
 		}
 	} else {
 		if len(result.Items) < queryParams.Max {
-			items := peoplePagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
+			items := s.peoplePagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
 			for _, person := range items.Items {
 				result.AddPerson(person)
 			}
@@ -276,7 +276,7 @@ func (s *PeopleService) Update(personID string, personRequest *PersonRequest) (*
 	path := "/people/{personId}"
 	path = strings.Replace(path, "{"+"personId"+"}", fmt.Sprintf("%v", personID), -1)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetBody(personRequest).
 		SetResult(&Person{}).
 		SetError(&Error{}).

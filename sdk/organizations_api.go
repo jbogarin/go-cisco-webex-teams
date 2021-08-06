@@ -31,13 +31,13 @@ func (organizations *Organizations) AddOrganization(item Organization) []Organiz
 	return organizations.Items
 }
 
-func organizationsPagination(linkHeader string, size, max int) *Organizations {
+func (s *OrganizationsService) organizationsPagination(linkHeader string, size, max int) *Organizations {
 	items := &Organizations{}
 
 	for _, l := range link.Parse(linkHeader) {
 		if l.Rel == "next" {
 
-			response, err := RestyClient.R().
+			response, err := s.client.R().
 				SetResult(&Organizations{}).
 				SetError(&Error{}).
 				Get(l.URI)
@@ -49,13 +49,13 @@ func organizationsPagination(linkHeader string, size, max int) *Organizations {
 			if size != 0 {
 				size = size + len(items.Items)
 				if size < max {
-					organizations := organizationsPagination(response.Header().Get("Link"), size, max)
+					organizations := s.organizationsPagination(response.Header().Get("Link"), size, max)
 					for _, organization := range organizations.Items {
 						items.AddOrganization(organization)
 					}
 				}
 			} else {
-				organizations := organizationsPagination(response.Header().Get("Link"), size, max)
+				organizations := s.organizationsPagination(response.Header().Get("Link"), size, max)
 				for _, organization := range organizations.Items {
 					items.AddOrganization(organization)
 				}
@@ -79,7 +79,7 @@ func (s *OrganizationsService) GetOrganization(orgID string) (*Organization, *re
 	path := "/organizations/{orgId}"
 	path = strings.Replace(path, "{"+"orgId"+"}", fmt.Sprintf("%v", orgID), -1)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetResult(&Organization{}).
 		SetError(&Error{}).
 		Get(path)
@@ -111,7 +111,7 @@ func (s *OrganizationsService) ListOrganizations(queryParams *ListOrganizationsQ
 
 	queryParamsString, _ := query.Values(queryParams)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetQueryString(queryParamsString.Encode()).
 		SetResult(&Organizations{}).
 		SetError(&Error{}).
@@ -122,14 +122,14 @@ func (s *OrganizationsService) ListOrganizations(queryParams *ListOrganizationsQ
 	}
 
 	result := response.Result().(*Organizations)
-	if queryParams.Paginate == true {
-		items := organizationsPagination(response.Header().Get("Link"), 0, 0)
+	if queryParams.Paginate {
+		items := s.organizationsPagination(response.Header().Get("Link"), 0, 0)
 		for _, organization := range items.Items {
 			result.AddOrganization(organization)
 		}
 	} else {
 		if len(result.Items) < queryParams.Max {
-			items := organizationsPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
+			items := s.organizationsPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
 			for _, organization := range items.Items {
 				result.AddOrganization(organization)
 			}

@@ -20,7 +20,7 @@ func (s *ContentsService) GetContent(contentID string) (*resty.Response, error) 
 	path := "/contents/{contentId}"
 	path = strings.Replace(path, "{"+"contentId"+"}", fmt.Sprintf("%v", contentID), -1)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetError(&Error{}).
 		Get(path)
 

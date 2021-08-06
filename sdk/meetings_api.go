@@ -86,13 +86,13 @@ func (meetings *Meetings) AddMeeting(item Meeting) []Meeting {
 	return meetings.Items
 }
 
-func meetingsPagination(linkHeader string, size, max int) *Meetings {
+func (s *MeetingsService) meetingsPagination(linkHeader string, size, max int) *Meetings {
 	items := &Meetings{}
 
 	for _, l := range link.Parse(linkHeader) {
 		if l.Rel == "next" {
 
-			response, err := RestyClient.R().
+			response, err := s.client.R().
 				SetResult(&Meetings{}).
 				SetError(&Error{}).
 				Get(l.URI)
@@ -104,13 +104,13 @@ func meetingsPagination(linkHeader string, size, max int) *Meetings {
 			if size != 0 {
 				size = size + len(items.Items)
 				if size < max {
-					meetings := meetingsPagination(response.Header().Get("Link"), size, max)
+					meetings := s.meetingsPagination(response.Header().Get("Link"), size, max)
 					for _, meeting := range meetings.Items {
 						items.AddMeeting(meeting)
 					}
 				}
 			} else {
-				meetings := meetingsPagination(response.Header().Get("Link"), size, max)
+				meetings := s.meetingsPagination(response.Header().Get("Link"), size, max)
 				for _, meeting := range meetings.Items {
 					items.AddMeeting(meeting)
 				}
@@ -133,7 +133,7 @@ func (s *MeetingsService) CreateMeeting(meetingCreateRequest *MeetingCreateReque
 
 	path := "/meetings/"
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetBody(meetingCreateRequest).
 		SetResult(&Meeting{}).
 		SetError(&Error{}).
@@ -158,7 +158,7 @@ func (s *MeetingsService) DeleteMeeting(meetingID string) (*resty.Response, erro
 	path := "/meetings/{meetingId}"
 	path = strings.Replace(path, "{"+"meetingId"+"}", fmt.Sprintf("%v", meetingID), -1)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetError(&Error{}).
 		Delete(path)
 
@@ -182,7 +182,7 @@ func (s *MeetingsService) GetMeeting(meetingID string) (*Meeting, *resty.Respons
 	path := "/meetings/{meetingId}"
 	path = strings.Replace(path, "{"+"meetingId"+"}", fmt.Sprintf("%v", meetingID), -1)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetResult(&Meeting{}).
 		SetError(&Error{}).
 		Get(path)
@@ -225,7 +225,7 @@ func (s *MeetingsService) ListMeetings(queryParams *ListMeetingsQueryParams) (*M
 
 	queryParamsString, _ := query.Values(queryParams)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetQueryString(queryParamsString.Encode()).
 		SetResult(&Meetings{}).
 		SetError(&Error{}).
@@ -236,14 +236,14 @@ func (s *MeetingsService) ListMeetings(queryParams *ListMeetingsQueryParams) (*M
 	}
 
 	result := response.Result().(*Meetings)
-	if queryParams.Paginate == true {
-		items := meetingsPagination(response.Header().Get("Link"), 0, 0)
+	if queryParams.Paginate {
+		items := s.meetingsPagination(response.Header().Get("Link"), 0, 0)
 		for _, meeting := range items.Items {
 			result.AddMeeting(meeting)
 		}
 	} else {
 		if len(result.Items) < queryParams.Max {
-			items := meetingsPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
+			items := s.meetingsPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
 			for _, meeting := range items.Items {
 				result.AddMeeting(meeting)
 			}

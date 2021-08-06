@@ -60,13 +60,13 @@ func (messages *Messages) AddMessage(item Message) []Message {
 	return messages.Items
 }
 
-func messagesPagination(linkHeader string, size, max int) *Messages {
+func (s *MessagesService) messagesPagination(linkHeader string, size, max int) *Messages {
 	items := &Messages{}
 
 	for _, l := range link.Parse(linkHeader) {
 		if l.Rel == "next" {
 
-			response, err := RestyClient.R().
+			response, err := s.client.R().
 				SetResult(&Messages{}).
 				SetError(&Error{}).
 				Get(l.URI)
@@ -78,13 +78,13 @@ func messagesPagination(linkHeader string, size, max int) *Messages {
 			if size != 0 {
 				size = size + len(items.Items)
 				if size < max {
-					messages := messagesPagination(response.Header().Get("Link"), size, max)
+					messages := s.messagesPagination(response.Header().Get("Link"), size, max)
 					for _, message := range messages.Items {
 						items.AddMessage(message)
 					}
 				}
 			} else {
-				messages := messagesPagination(response.Header().Get("Link"), size, max)
+				messages := s.messagesPagination(response.Header().Get("Link"), size, max)
 				for _, message := range messages.Items {
 					items.AddMessage(message)
 				}
@@ -107,7 +107,7 @@ func (s *MessagesService) CreateMessage(messageCreateRequest *MessageCreateReque
 
 	path := "/messages/"
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetBody(messageCreateRequest).
 		SetResult(&Message{}).
 		SetError(&Error{}).
@@ -132,7 +132,7 @@ func (s *MessagesService) DeleteMessage(messageID string) (*resty.Response, erro
 	path := "/messages/{messageId}"
 	path = strings.Replace(path, "{"+"messageId"+"}", fmt.Sprintf("%v", messageID), -1)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetError(&Error{}).
 		Delete(path)
 
@@ -156,7 +156,7 @@ func (s *MessagesService) GetMessage(messageID string) (*Message, *resty.Respons
 	path := "/messages/{messageId}"
 	path = strings.Replace(path, "{"+"messageId"+"}", fmt.Sprintf("%v", messageID), -1)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetResult(&Message{}).
 		SetError(&Error{}).
 		Get(path)
@@ -199,7 +199,7 @@ func (s *MessagesService) ListMessages(queryParams *ListMessagesQueryParams) (*M
 
 	queryParamsString, _ := query.Values(queryParams)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetQueryString(queryParamsString.Encode()).
 		SetResult(&Messages{}).
 		SetError(&Error{}).
@@ -210,14 +210,14 @@ func (s *MessagesService) ListMessages(queryParams *ListMessagesQueryParams) (*M
 	}
 
 	result := response.Result().(*Messages)
-	if queryParams.Paginate == true {
-		items := messagesPagination(response.Header().Get("Link"), 0, 0)
+	if queryParams.Paginate {
+		items := s.messagesPagination(response.Header().Get("Link"), 0, 0)
 		for _, message := range items.Items {
 			result.AddMessage(message)
 		}
 	} else {
 		if len(result.Items) < queryParams.Max {
-			items := messagesPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
+			items := s.messagesPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
 			for _, message := range items.Items {
 				result.AddMessage(message)
 			}

@@ -65,7 +65,7 @@ func (s *EventsService) ListEvents(listEventsQueryParams *ListEventsQueryParams)
 
 	queryString, _ := query.Values(listEventsQueryParams)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetQueryString(queryString.Encode()).
 		SetResult(&Events{}).
 		SetError(&Error{}).
@@ -91,7 +91,7 @@ func (s *EventsService) GetEvent(eventID string) (*Event, *resty.Response, error
 	path := "/events/{eventId}"
 	path = strings.Replace(path, "{"+"eventId"+"}", fmt.Sprintf("%v", eventID), -1)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetResult(&Event{}).
 		SetError(&Error{}).
 		Get(path)

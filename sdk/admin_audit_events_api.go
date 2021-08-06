@@ -61,7 +61,7 @@ func (s *AdminAuditEventsService) ListAdminAuditEvents(listAdminAuditEventsQuery
 
 	queryString, _ := query.Values(listAdminAuditEventsQueryParams)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetQueryString(queryString.Encode()).
 		SetResult(&AuditEvents{}).
 		SetError(&Error{}).

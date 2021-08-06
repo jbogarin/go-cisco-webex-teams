@@ -29,13 +29,13 @@ func (roles *Roles) AddRole(item Role) []Role {
 	return roles.Items
 }
 
-func rolesPagination(linkHeader string, size, max int) *Roles {
+func (s *RolesService) rolesPagination(linkHeader string, size, max int) *Roles {
 	items := &Roles{}
 
 	for _, l := range link.Parse(linkHeader) {
 		if l.Rel == "next" {
 
-			response, err := RestyClient.R().
+			response, err := s.client.R().
 				SetResult(&Roles{}).
 				SetError(&Error{}).
 				Get(l.URI)
@@ -47,13 +47,13 @@ func rolesPagination(linkHeader string, size, max int) *Roles {
 			if size != 0 {
 				size = size + len(items.Items)
 				if size < max {
-					roles := rolesPagination(response.Header().Get("Link"), size, max)
+					roles := s.rolesPagination(response.Header().Get("Link"), size, max)
 					for _, role := range roles.Items {
 						items.AddRole(role)
 					}
 				}
 			} else {
-				roles := rolesPagination(response.Header().Get("Link"), size, max)
+				roles := s.rolesPagination(response.Header().Get("Link"), size, max)
 				for _, role := range roles.Items {
 					items.AddRole(role)
 				}
@@ -77,7 +77,7 @@ func (s *RolesService) GetRole(roleID string) (*Role, *resty.Response, error) {
 	path := "/roles/{roleId}"
 	path = strings.Replace(path, "{"+"roleId"+"}", fmt.Sprintf("%v", roleID), -1)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetResult(&Role{}).
 		SetError(&Error{}).
 		Get(path)
@@ -109,7 +109,7 @@ func (s *RolesService) ListRoles(queryParams *RolesListQueryParams) (*Roles, *re
 
 	queryParamsString, _ := query.Values(queryParams)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetQueryString(queryParamsString.Encode()).
 		SetResult(&Roles{}).
 		SetError(&Error{}).
@@ -120,14 +120,14 @@ func (s *RolesService) ListRoles(queryParams *RolesListQueryParams) (*Roles, *re
 	}
 
 	result := response.Result().(*Roles)
-	if queryParams.Paginate == true {
-		items := rolesPagination(response.Header().Get("Link"), 0, 0)
+	if queryParams.Paginate {
+		items := s.rolesPagination(response.Header().Get("Link"), 0, 0)
 		for _, role := range items.Items {
 			result.AddRole(role)
 		}
 	} else {
 		if len(result.Items) < queryParams.Max {
-			items := rolesPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
+			items := s.rolesPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
 			for _, role := range items.Items {
 				result.AddRole(role)
 			}

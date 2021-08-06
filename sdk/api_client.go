@@ -7,7 +7,6 @@ import (
 )
 
 // RestyClient is the REST Client
-var RestyClient *resty.Client
 
 const apiURL = "https://webexapis.com/v1"
 
@@ -35,12 +34,12 @@ type Client struct {
 }
 
 type service struct {
-	client *Client
+	client *resty.Client
 }
 
 // SetAuthToken defines the Authorization token sent in the request
 func (s *Client) SetAuthToken(accessToken string) {
-	RestyClient.SetAuthToken(accessToken)
+	s.common.client.SetAuthToken(accessToken)
 }
 
 // NewClient creates a new API client. Requires a userAgent string describing your application.
@@ -48,10 +47,10 @@ func (s *Client) SetAuthToken(accessToken string) {
 func NewClient() *Client {
 	client := resty.New()
 	c := &Client{}
-	RestyClient = client
-	RestyClient.SetHostURL(apiURL)
+	c.common.client = client
+	c.common.client.SetHostURL(apiURL)
 	if os.Getenv("WEBEX_TEAMS_ACCESS_TOKEN") != "" {
-		RestyClient.SetAuthToken(os.Getenv("WEBEX_TEAMS_ACCESS_TOKEN"))
+		c.common.client.SetAuthToken(os.Getenv("WEBEX_TEAMS_ACCESS_TOKEN"))
 	}
 
 	// API Services

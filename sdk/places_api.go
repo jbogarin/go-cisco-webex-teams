@@ -47,13 +47,13 @@ func (places *Places) AddPlace(item Place) []Place {
 	return places.Items
 }
 
-func placesPagination(linkHeader string, size, max int) *Places {
+func (s *PlacesService) placesPagination(linkHeader string, size, max int) *Places {
 	items := &Places{}
 
 	for _, l := range link.Parse(linkHeader) {
 		if l.Rel == "next" {
 
-			response, err := RestyClient.R().
+			response, err := s.client.R().
 				SetResult(&Places{}).
 				SetError(&Error{}).
 				Get(l.URI)
@@ -65,13 +65,13 @@ func placesPagination(linkHeader string, size, max int) *Places {
 			if size != 0 {
 				size = size + len(items.Items)
 				if size < max {
-					places := placesPagination(response.Header().Get("Link"), size, max)
+					places := s.placesPagination(response.Header().Get("Link"), size, max)
 					for _, place := range places.Items {
 						items.AddPlace(place)
 					}
 				}
 			} else {
-				places := placesPagination(response.Header().Get("Link"), size, max)
+				places := s.placesPagination(response.Header().Get("Link"), size, max)
 				for _, place := range places.Items {
 					items.AddPlace(place)
 				}
@@ -94,7 +94,7 @@ func (s *PlacesService) CreatePlace(placeCreateRequest *PlaceCreateRequest) (*Pl
 
 	path := "/places/"
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetBody(placeCreateRequest).
 		SetResult(&Place{}).
 		SetError(&Error{}).
@@ -122,7 +122,7 @@ func (s *PlacesService) DeletePlace(placeID string) (*resty.Response, error) {
 	path := "/places/{placeId}"
 	path = strings.Replace(path, "{"+"placeId"+"}", fmt.Sprintf("%v", placeID), -1)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		Delete(path)
 
 	if err != nil {
@@ -146,7 +146,7 @@ func (s *PlacesService) GetPlace(placeID string) (*Place, *resty.Response, error
 	path := "/places/{placeId}"
 	path = strings.Replace(path, "{"+"placeId"+"}", fmt.Sprintf("%v", placeID), -1)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetResult(&Place{}).
 		SetError(&Error{}).
 		Get(path)
@@ -188,7 +188,7 @@ func (s *PlacesService) ListPlaces(queryParams *ListPlacesQueryParams) (*Places,
 
 	queryParamsString, _ := query.Values(queryParams)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetQueryString(queryParamsString.Encode()).
 		SetResult(&Places{}).
 		Get(path)
@@ -198,14 +198,14 @@ func (s *PlacesService) ListPlaces(queryParams *ListPlacesQueryParams) (*Places,
 	}
 
 	result := response.Result().(*Places)
-	if queryParams.Paginate == true {
-		items := placesPagination(response.Header().Get("Link"), 0, 0)
+	if queryParams.Paginate {
+		items := s.placesPagination(response.Header().Get("Link"), 0, 0)
 		for _, place := range items.Items {
 			result.AddPlace(place)
 		}
 	} else {
 		if len(result.Items) < queryParams.Max {
-			items := placesPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
+			items := s.placesPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
 			for _, place := range items.Items {
 				result.AddPlace(place)
 			}
@@ -229,7 +229,7 @@ func (s *PlacesService) UpdatePlace(placeID string, placeUpdateRequest *PlaceUpd
 	path := "/places/{placeId}"
 	path = strings.Replace(path, "{"+"placeId"+"}", fmt.Sprintf("%v", placeID), -1)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetBody(placeUpdateRequest).
 		SetResult(&Place{}).
 		SetError(&Error{}).

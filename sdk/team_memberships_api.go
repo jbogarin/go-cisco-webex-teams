@@ -48,13 +48,13 @@ func (teamMembership *TeamMemberships) AddTeamMembership(item TeamMembership) []
 	return teamMembership.Items
 }
 
-func teamMembershipsPagination(linkHeader string, size, max int) *TeamMemberships {
+func (s *TeamMembershipsService) teamMembershipsPagination(linkHeader string, size, max int) *TeamMemberships {
 	items := &TeamMemberships{}
 
 	for _, l := range link.Parse(linkHeader) {
 		if l.Rel == "next" {
 
-			response, err := RestyClient.R().
+			response, err := s.client.R().
 				SetResult(&TeamMemberships{}).
 				SetError(&Error{}).
 				Get(l.URI)
@@ -66,13 +66,13 @@ func teamMembershipsPagination(linkHeader string, size, max int) *TeamMembership
 			if size != 0 {
 				size = size + len(items.Items)
 				if size < max {
-					teamMemberships := teamMembershipsPagination(response.Header().Get("Link"), size, max)
+					teamMemberships := s.teamMembershipsPagination(response.Header().Get("Link"), size, max)
 					for _, teamMembership := range teamMemberships.Items {
 						items.AddTeamMembership(teamMembership)
 					}
 				}
 			} else {
-				teamMemberships := teamMembershipsPagination(response.Header().Get("Link"), size, max)
+				teamMemberships := s.teamMembershipsPagination(response.Header().Get("Link"), size, max)
 				for _, teamMembership := range teamMemberships.Items {
 					items.AddTeamMembership(teamMembership)
 				}
@@ -93,7 +93,7 @@ func (s *TeamMembershipsService) CreateTeamMembership(teamMemberhipCreateRequest
 
 	path := "/team/memberships/"
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetBody(teamMemberhipCreateRequest).
 		SetResult(&TeamMembership{}).
 		SetError(&Error{}).
@@ -120,7 +120,7 @@ func (s *TeamMembershipsService) DeleteTeamMembership(membershipID string) (*res
 	path := "/team/memberships/{membershipId}"
 	path = strings.Replace(path, "{"+"membershipId"+"}", fmt.Sprintf("%v", membershipID), -1)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetError(&Error{}).
 		Delete(path)
 
@@ -144,7 +144,7 @@ func (s *TeamMembershipsService) GetTeamMembership(membershipID string) (*TeamMe
 	path := "/team/memberships/{membershipId}"
 	path = strings.Replace(path, "{"+"membershipId"+"}", fmt.Sprintf("%v", membershipID), -1)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetResult(&TeamMembership{}).
 		SetError(&Error{}).
 		Get(path)
@@ -180,7 +180,7 @@ func (s *TeamMembershipsService) ListTeamMemberhips(queryParams *ListTeamMemberh
 
 	queryParamsString, _ := query.Values(queryParams)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetQueryString(queryParamsString.Encode()).
 		SetResult(&TeamMemberships{}).
 		SetError(&Error{}).
@@ -191,14 +191,14 @@ func (s *TeamMembershipsService) ListTeamMemberhips(queryParams *ListTeamMemberh
 	}
 
 	result := response.Result().(*TeamMemberships)
-	if queryParams.Paginate == true {
-		items := teamMembershipsPagination(response.Header().Get("Link"), 0, 0)
+	if queryParams.Paginate {
+		items := s.teamMembershipsPagination(response.Header().Get("Link"), 0, 0)
 		for _, teamMembership := range items.Items {
 			result.AddTeamMembership(teamMembership)
 		}
 	} else {
 		if len(result.Items) < queryParams.Max {
-			items := teamMembershipsPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
+			items := s.teamMembershipsPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
 			for _, teamMembership := range items.Items {
 				result.AddTeamMembership(teamMembership)
 			}
@@ -221,7 +221,7 @@ func (s *TeamMembershipsService) UpdateTeamMembership(membershipID string, teamM
 	path := "/team/memberships/{membershipId}"
 	path = strings.Replace(path, "{"+"membershipId"+"}", fmt.Sprintf("%v", membershipID), -1)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetBody(teamMembershipUpdateRequest).
 		SetResult(&TeamMembership{}).
 		SetError(&Error{}).

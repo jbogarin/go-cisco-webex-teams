@@ -61,12 +61,12 @@ func (recordings *Recordings) AddRecording(item Recording) []Recording {
 	return recordings.Items
 }
 
-func recordingsPagination(linkHeader string, size, max int) *Recordings {
+func (s *RecordingsService) recordingsPagination(linkHeader string, size, max int) *Recordings {
 	items := &Recordings{}
 
 	for _, l := range link.Parse(linkHeader) {
 		if l.Rel == "next" {
-			response, err := RestyClient.R().
+			response, err := s.client.R().
 				SetResult(&Recordings{}).
 				SetError(&Error{}).
 				Get(l.URI)
@@ -78,13 +78,13 @@ func recordingsPagination(linkHeader string, size, max int) *Recordings {
 			if size != 0 {
 				size = size + len(items.Items)
 				if size < max {
-					recordings := recordingsPagination(response.Header().Get("Link"), size, max)
+					recordings := s.recordingsPagination(response.Header().Get("Link"), size, max)
 					for _, recording := range recordings.Items {
 						items.AddRecording(recording)
 					}
 				}
 			} else {
-				recordings := recordingsPagination(response.Header().Get("Link"), size, max)
+				recordings := s.recordingsPagination(response.Header().Get("Link"), size, max)
 				for _, recording := range recordings.Items {
 					items.AddRecording(recording)
 				}
@@ -121,7 +121,7 @@ func (s *RecordingsService) ListRecordings(queryParams *ListRecordingsQueryParam
 
 	queryParamsString, _ := query.Values(queryParams)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetQueryString(queryParamsString.Encode()).
 		SetResult(&Recordings{}).
 		SetError(&Error{}).
@@ -132,14 +132,14 @@ func (s *RecordingsService) ListRecordings(queryParams *ListRecordingsQueryParam
 	}
 
 	result := response.Result().(*Recordings)
-	if queryParams.Paginate == true {
-		items := recordingsPagination(response.Header().Get("Link"), 0, 0)
+	if queryParams.Paginate {
+		items := s.recordingsPagination(response.Header().Get("Link"), 0, 0)
 		for _, recording := range items.Items {
 			result.AddRecording(recording)
 		}
 	} else {
 		if len(result.Items) < queryParams.Max {
-			items := recordingsPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
+			items := s.recordingsPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
 			for _, recording := range items.Items {
 				result.AddRecording(recording)
 			}
@@ -159,7 +159,7 @@ func (s *RecordingsService) GetRecording(recordingID string) (*RecordingDetails,
 	path := "/recordings/{recordingId}"
 	path = strings.Replace(path, "{"+"recordingId"+"}", fmt.Sprintf("%v", recordingID), -1)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetResult(&RecordingDetails{}).
 		SetError(&Error{}).
 		Get(path)
@@ -186,7 +186,7 @@ func (s *RecordingsService) DeleteRecording(recordingID string) (*resty.Response
 	path := "/recordings/{recordingId}"
 	path = strings.Replace(path, "{"+"recordingId"+"}", fmt.Sprintf("%v", recordingID), -1)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetError(&Error{}).
 		Delete(path)
 

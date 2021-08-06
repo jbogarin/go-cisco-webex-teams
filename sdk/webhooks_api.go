@@ -84,13 +84,13 @@ func (webhooks *Webhooks) AddWebhook(item Webhook) []Webhook {
 	return webhooks.Items
 }
 
-func webhooksPagination(linkHeader string, size, max int) *Webhooks {
+func (s *WebhooksService) webhooksPagination(linkHeader string, size, max int) *Webhooks {
 	items := &Webhooks{}
 
 	for _, l := range link.Parse(linkHeader) {
 		if l.Rel == "next" {
 
-			response, err := RestyClient.R().
+			response, err := s.client.R().
 				SetResult(&Webhooks{}).
 				SetError(&Error{}).
 				Get(l.URI)
@@ -102,13 +102,13 @@ func webhooksPagination(linkHeader string, size, max int) *Webhooks {
 			if size != 0 {
 				size = size + len(items.Items)
 				if size < max {
-					webhooks := webhooksPagination(response.Header().Get("Link"), size, max)
+					webhooks := s.webhooksPagination(response.Header().Get("Link"), size, max)
 					for _, webhook := range webhooks.Items {
 						items.AddWebhook(webhook)
 					}
 				}
 			} else {
-				webhooks := webhooksPagination(response.Header().Get("Link"), size, max)
+				webhooks := s.webhooksPagination(response.Header().Get("Link"), size, max)
 				for _, webhook := range webhooks.Items {
 					items.AddWebhook(webhook)
 				}
@@ -129,7 +129,7 @@ func (s *WebhooksService) CreateWebhook(webhookCreateRequest *WebhookCreateReque
 
 	path := "/webhooks/"
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetBody(webhookCreateRequest).
 		SetResult(&Webhook{}).
 		SetError(&Error{}).
@@ -156,7 +156,7 @@ func (s *WebhooksService) DeleteWebhook(webhookID string) (*resty.Response, erro
 	path := "/webhooks/{webhookId}"
 	path = strings.Replace(path, "{"+"webhookId"+"}", fmt.Sprintf("%v", webhookID), -1)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetError(&Error{}).
 		Delete(path)
 
@@ -180,7 +180,7 @@ func (s *WebhooksService) GetWebhook(webhookID string) (*Webhook, *resty.Respons
 	path := "/webhooks/{webhookId}"
 	path = strings.Replace(path, "{"+"webhookId"+"}", fmt.Sprintf("%v", webhookID), -1)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetResult(&Webhook{}).
 		SetError(&Error{}).
 		Get(path)
@@ -212,7 +212,7 @@ func (s *WebhooksService) ListWebhooks(queryParams *ListWebhooksQueryParams) (*W
 
 	queryParamsString, _ := query.Values(queryParams)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetQueryString(queryParamsString.Encode()).
 		SetResult(&Webhooks{}).
 		SetError(&Error{}).
@@ -223,14 +223,14 @@ func (s *WebhooksService) ListWebhooks(queryParams *ListWebhooksQueryParams) (*W
 	}
 
 	result := response.Result().(*Webhooks)
-	if queryParams.Paginate == true {
-		items := webhooksPagination(response.Header().Get("Link"), 0, 0)
+	if queryParams.Paginate {
+		items := s.webhooksPagination(response.Header().Get("Link"), 0, 0)
 		for _, webhook := range items.Items {
 			result.AddWebhook(webhook)
 		}
 	} else {
 		if len(result.Items) < queryParams.Max {
-			items := webhooksPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
+			items := s.webhooksPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
 			for _, webhook := range items.Items {
 				result.AddWebhook(webhook)
 			}
@@ -254,7 +254,7 @@ func (s *WebhooksService) UpdateWebhook(webhookID string, webhookUpdateRequest *
 	path := "/webhooks/{webhookId}"
 	path = strings.Replace(path, "{"+"webhookId"+"}", fmt.Sprintf("%v", webhookID), -1)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetBody(webhookUpdateRequest).
 		SetResult(&Webhook{}).
 		SetError(&Error{}).

@@ -60,12 +60,12 @@ func (devices *Devices) AddDevice(item Device) []Device {
 	return devices.Items
 }
 
-func devicesPagination(linkHeader string, size, max int) *Devices {
+func (s *DevicesService) devicesPagination(linkHeader string, size, max int) *Devices {
 	items := &Devices{}
 
 	for _, l := range link.Parse(linkHeader) {
 		if l.Rel == "next" {
-			response, err := RestyClient.R().
+			response, err := s.client.R().
 				SetResult(&Devices{}).
 				SetError(&Error{}).
 				Get(l.URI)
@@ -77,13 +77,13 @@ func devicesPagination(linkHeader string, size, max int) *Devices {
 			if size != 0 {
 				size = size + len(items.Items)
 				if size < max {
-					devices := devicesPagination(response.Header().Get("Link"), size, max)
+					devices := s.devicesPagination(response.Header().Get("Link"), size, max)
 					for _, device := range devices.Items {
 						items.AddDevice(device)
 					}
 				}
 			} else {
-				devices := devicesPagination(response.Header().Get("Link"), size, max)
+				devices := s.devicesPagination(response.Header().Get("Link"), size, max)
 				for _, device := range devices.Items {
 					items.AddDevice(device)
 				}
@@ -106,7 +106,7 @@ func (s *DevicesService) CreateDeviceActivationCode(deviceCodeRequest *DeviceCod
 
 	path := "/devices/activationCode"
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetBody(deviceCodeRequest).
 		SetResult(&DeviceCode{}).
 		SetError(&Error{}).
@@ -133,7 +133,7 @@ func (s *DevicesService) DeleteDevice(deviceID string) (*resty.Response, error) 
 	path := "/devices/{deviceId}"
 	path = strings.Replace(path, "{"+"deviceId"+"}", fmt.Sprintf("%v", deviceID), -1)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetError(&Error{}).
 		Delete(path)
 
@@ -155,7 +155,7 @@ func (s *DevicesService) GetDevice(deviceID string) (*Device, *resty.Response, e
 	path := "/devices/{deviceId}"
 	path = strings.Replace(path, "{"+"deviceId"+"}", fmt.Sprintf("%v", deviceID), -1)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetResult(&Device{}).
 		SetError(&Error{}).
 		Get(path)
@@ -216,7 +216,7 @@ func (s *DevicesService) ListDevices(queryParams *ListDevicesQueryParams) (*Devi
 
 	queryParamsString, _ := query.Values(queryParams)
 
-	response, err := RestyClient.R().
+	response, err := s.client.R().
 		SetQueryString(queryParamsString.Encode()).
 		SetResult(&Devices{}).
 		SetError(&Error{}).
@@ -227,14 +227,14 @@ func (s *DevicesService) ListDevices(queryParams *ListDevicesQueryParams) (*Devi
 	}
 
 	result := response.Result().(*Devices)
-	if queryParams.Paginate == true {
-		items := devicesPagination(response.Header().Get("Link"), 0, 0)
+	if queryParams.Paginate {
+		items := s.devicesPagination(response.Header().Get("Link"), 0, 0)
 		for _, device := range items.Items {
 			result.AddDevice(device)
 		}
 	} else {
 		if len(result.Items) < queryParams.Max {
-			items := devicesPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
+			items := s.devicesPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
 			for _, device := range items.Items {
 				result.AddDevice(device)
 			}

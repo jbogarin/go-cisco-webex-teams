@@ -9,6 +9,7 @@ import (
 
 // Client is Webex Teams API client
 var Client *webexteams.Client
+var Client2 *webexteams.Client
 
 func main() {
 	Client = webexteams.NewClient()
