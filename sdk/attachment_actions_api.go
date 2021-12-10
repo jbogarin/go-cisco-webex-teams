@@ -41,7 +41,7 @@ func (s *AttachmentActionsService) CreateAttachmentAction(attachActionCreateRequ
 
 	response, err := s.client.R().
 		SetBody(attachActionCreateRequest).
-		SetResult(&Message{}).
+		SetResult(&AttachmentAction{}).
 		SetError(&Error{}).
 		Post(path)
 
