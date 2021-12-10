@@ -31,7 +31,7 @@ type AttachmentAction struct {
 
 // CreateAttachmentAction creates an attachment action.
 /*
-Creates an attachment action for a message id
+Creates an attachment action
  @param attachActionCreateRequest
  @return AttachmentAction
 */
