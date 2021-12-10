@@ -56,6 +56,7 @@ func NewClient() *Client {
 
 	// API Services
 	c.AdminAuditEvents = (*AdminAuditEventsService)(&c.common)
+	c.AttachmentActions = (*AttachmentActionsService)(&c.common)
 	c.Contents = (*ContentsService)(&c.common)
 	c.Events = (*EventsService)(&c.common)
 	c.Devices = (*DevicesService)(&c.common)
