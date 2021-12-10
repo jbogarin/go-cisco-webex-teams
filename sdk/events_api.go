@@ -30,6 +30,7 @@ type Event struct {
 		PersonID    string `json:"personId,omitempty"`    // Person ID of the user who triggered the event.
 		PersonEmail string `json:"personEmail,omitempty"` // Person Email of the user who triggered the event.
 		Created     string `json:"created,omitempty"`     // The date and time of the event.
+		Type        string `json:"type,omitempty"`        // The type of event.
 	} `json:"data,omitempty"` // data
 }
 
