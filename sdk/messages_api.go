@@ -22,6 +22,7 @@ type Attachment struct {
 // MessageCreateRequest is the Create Message Request Parameters
 type MessageCreateRequest struct {
 	RoomID        string       `json:"roomId,omitempty"`        // Room ID.
+	ParentID      string       `json:"parentId,omitempty"`      // Parent ID
 	ToPersonID    string       `json:"toPersonId,omitempty"`    // Person ID (for type=direct).
 	ToPersonEmail string       `json:"toPersonEmail,omitempty"` // Person email (for type=direct).
 	Text          string       `json:"text,omitempty"`          // Message in plain text format.
