@@ -123,6 +123,32 @@ func (s *MessagesService) CreateMessage(messageCreateRequest *MessageCreateReque
 
 }
 
+// CreateMessage Post a plain text or rich text message, and optionally, a media content attachment, to a room.
+/* Post a plain text or rich text message, and optionally, a media content attachment, to a room.
+The files parameter is an array, which accepts multiple values to allow for future expansion, but currently only one file may be included with the message.
+
+ @param messageCreateRequest
+ @return Message
+*/
+func (s *MessagesService) EditMessage(messageCreateRequest *MessageCreateRequest) (*Message, *resty.Response, error) {
+
+	path := "/messages/"
+
+	response, err := s.client.R().
+		SetBody(messageCreateRequest).
+		SetResult(&Message{}).
+		SetError(&Error{}).
+		Put(path)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	result := response.Result().(*Message)
+	return result, response, err
+
+}
+
 // DeleteMessage Delete a Message.
 /* Deletes a message by ID.
 @param messageID Message ID.
