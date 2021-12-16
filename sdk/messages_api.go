@@ -28,12 +28,19 @@ type MessageCreateRequest struct {
 	Text          string       `json:"text,omitempty"`          // Message in plain text format.
 	Markdown      string       `json:"markdown,omitempty"`      // Message in markdown format.
 	Files         []string     `json:"files,omitempty"`         // File URL array.
-	Attachments   []Attachment `json:"attachments,omitempty"`   //Attachment Array
+	Attachments   []Attachment `json:"attachments,omitempty"`   // Attachment Array
 }
 
 // MessageEditRequest is the Edit Message Request Parameters
 type MessageEditRequest struct {
-	MessageCreateRequest
+	RoomID        string       `json:"roomId,omitempty"`        // Room ID.
+	ParentID      string       `json:"parentId,omitempty"`      // Parent ID
+	ToPersonID    string       `json:"toPersonId,omitempty"`    // Person ID (for type=direct).
+	ToPersonEmail string       `json:"toPersonEmail,omitempty"` // Person email (for type=direct).
+	Text          string       `json:"text,omitempty"`          // Message in plain text format.
+	Markdown      string       `json:"markdown,omitempty"`      // Message in markdown format.
+	Files         []string     `json:"files,omitempty"`         // File URL array.
+	Attachments   []Attachment `json:"attachments,omitempty"`   // Attachment Array
 }
 
 // Message is the Message definition
