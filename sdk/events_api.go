@@ -17,6 +17,7 @@ type EventsService service
 type Event struct {
 	ID         string    `json:"id,omitempty"`         // A unique identifier for the event.
 	Resource   string    `json:"resource,omitempty"`   // The type of resource in the event.
+	Event      string    `json:"event,omitempty"`      // The type of event that was triggered.
 	AppID      string    `json:"appId,omitempty"`      // The ID of the application for the event.
 	ActorID    string    `json:"actorId,omitempty"`    // The personId of the person who made the change.
 	OrgID      string    `json:"orgId,omitempty"`      // The ID of the organization for the event.
