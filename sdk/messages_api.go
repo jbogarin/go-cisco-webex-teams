@@ -43,6 +43,7 @@ type MessageEditRequest struct {
 type Message struct {
 	ID              string       `json:"id,omitempty"`              // Message ID.
 	RoomID          string       `json:"roomId,omitempty"`          // Room ID.
+	ParentID        string       `json:"parentId,omitempty"`        // Parent ID
 	RoomType        string       `json:"roomType,omitempty"`        // Room type (group or direct).
 	ToPersonID      string       `json:"toPersonId,omitempty"`      // Person ID (for type=direct).
 	ToPersonEmail   string       `json:"toPersonEmail,omitempty"`   // Person email (for type=direct).
