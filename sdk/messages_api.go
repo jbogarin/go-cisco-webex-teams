@@ -1,7 +1,6 @@
 package webexteams
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -131,48 +130,46 @@ func (s *MessagesService) CreateMessage(messageCreateRequest *MessageCreateReque
 
 	responsePart := s.client.R()
 
-	if messageCreateRequest.RoomID != "" {
-		responsePart.SetMultipartFormData(map[string]string{"roomId": messageCreateRequest.RoomID})
-	}
-
-	if messageCreateRequest.ParentID != "" {
-		responsePart.SetMultipartFormData(map[string]string{"parentId": messageCreateRequest.ParentID})
-	}
-
-	if messageCreateRequest.Markdown != "" {
-		responsePart.SetMultipartFormData(map[string]string{"markdown": messageCreateRequest.Markdown})
-	}
-
-	if messageCreateRequest.Text != "" {
-		responsePart.SetMultipartFormData(map[string]string{"text": messageCreateRequest.Text})
-	}
-
-	if messageCreateRequest.ToPersonEmail != "" {
-		responsePart.SetMultipartFormData(map[string]string{"toPersonEmail": messageCreateRequest.ToPersonEmail})
-	}
-
-	if messageCreateRequest.ToPersonID != "" {
-		responsePart.SetMultipartFormData(map[string]string{"toPersonId": messageCreateRequest.ToPersonID})
-	}
-
-	if len(messageCreateRequest.Attachments) > 0 {
-		jAttachments, err := json.Marshal(messageCreateRequest.Attachments)
-		if err != nil {
-			return nil, nil, err
+	if len(messageCreateRequest.Attachments) <= 0 {
+		if messageCreateRequest.RoomID != "" {
+			responsePart.SetMultipartFormData(map[string]string{"roomId": messageCreateRequest.RoomID})
 		}
-		responsePart.SetMultipartFormData(map[string]string{"attachments": string(jAttachments)})
-	}
 
-	if len(messageCreateRequest.Files) > 1 {
-		return nil, nil, errors.New("multi file attachment is not supported yet")
-	}
-
-	for _, fileToSend := range messageCreateRequest.Files {
-		if fileToSend.RemoteFileURI != "" {
-			responsePart.SetMultipartFormData(map[string]string{"files": fileToSend.RemoteFileURI})
-		} else if fileToSend.Reader != nil {
-			responsePart.SetMultipartField("files", fileToSend.Name, fileToSend.ContentType, fileToSend.Reader)
+		if messageCreateRequest.ParentID != "" {
+			responsePart.SetMultipartFormData(map[string]string{"parentId": messageCreateRequest.ParentID})
 		}
+
+		if messageCreateRequest.Markdown != "" {
+			responsePart.SetMultipartFormData(map[string]string{"markdown": messageCreateRequest.Markdown})
+		}
+
+		if messageCreateRequest.Text != "" {
+			responsePart.SetMultipartFormData(map[string]string{"text": messageCreateRequest.Text})
+		}
+
+		if messageCreateRequest.ToPersonEmail != "" {
+			responsePart.SetMultipartFormData(map[string]string{"toPersonEmail": messageCreateRequest.ToPersonEmail})
+		}
+
+		if messageCreateRequest.ToPersonID != "" {
+			responsePart.SetMultipartFormData(map[string]string{"toPersonId": messageCreateRequest.ToPersonID})
+		}
+		if len(messageCreateRequest.Files) > 1 {
+			return nil, nil, errors.New("multi file attachment is not supported yet")
+		}
+
+		for _, fileToSend := range messageCreateRequest.Files {
+			if fileToSend.RemoteFileURI != "" {
+				responsePart.SetMultipartFormData(map[string]string{"files": fileToSend.RemoteFileURI})
+			} else if fileToSend.Reader != nil {
+				responsePart.SetMultipartField("files", fileToSend.Name, fileToSend.ContentType, fileToSend.Reader)
+			}
+		}
+	} else {
+		if len(messageCreateRequest.Files) > 0 {
+			return nil, nil, errors.New("sending files with attachment is not supported yet")
+		}
+		responsePart.SetBody(messageCreateRequest)
 	}
 
 	response, err := responsePart.
