@@ -319,3 +319,53 @@ func (s *MessagesService) ListMessages(queryParams *ListMessagesQueryParams) (*M
 	return result, response, err
 
 }
+
+// DirectMessagesQueryParams are the query params for the ListMessages API Call
+type DirectMessagesQueryParams struct {
+	ParentID    string `url:"parentId,omitempty"`    // List messages with a parent, by ID.
+	PersonID    string `url:"personId,omitempty"`    // List messages in a 1:1 room, by person ID.
+	PersonEmail string `url:"personEmail,omitempty"` // List messages in a 1:1 room, by person email.
+	Max         int    `url:"max,omitempty"`         // Limit the maximum number of items in the response.
+	Paginate    bool   // Indicates if pagination is needed
+}
+
+// GetDirectMessages Lists all messages in a 1:1 (direct) room.
+/* Lists all messages in a 1:1 (direct) room.
+Use the personId or personEmail query parameter to specify the room.
+ @param parentId Parent Message ID.
+ @param personId Person ID.
+ @param personEmail Person Email.
+ @return a list of Messages
+*/
+func (s *MessagesService) GetDirectMessages(queryParams *DirectMessagesQueryParams) (*Messages, *resty.Response, error) {
+	path := "/messages/direct"
+
+	queryParamsString, _ := query.Values(queryParams)
+
+	response, err := s.client.R().
+		SetQueryString(queryParamsString.Encode()).
+		SetResult(&Messages{}).
+		Get(path)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	result := response.Result().(*Messages)
+	if queryParams.Paginate == true {
+		items := s.messagesPagination(response.Header().Get("Link"), 0, 0)
+		for _, message := range items.Items {
+			result.AddMessage(message)
+		}
+	} else {
+		if len(result.Items) < queryParams.Max {
+			items := s.messagesPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
+			for _, message := range items.Items {
+				result.AddMessage(message)
+			}
+		}
+	}
+
+	return result, response, err
+
+}
