@@ -5,12 +5,12 @@ go-cisco-webex-teams is a Go client library for the [Cisco Webex Teams API](http
 ## Usage
 
 ```go
-import webexteams "github.com/jbogarin/go-cisco-webex-teams/sdk"
+import webexteams "github.com/launch100/go-cisco-webex-teams/sdk"
 ```
 
 ## Documentation
 
-Documentation for the library can be found [here](https://godoc.org/github.com/jbogarin/go-cisco-webex-teams/sdk)
+Documentation for the library can be found [here](https://godoc.org/github.com/launch100/go-cisco-webex-teams/sdk)
 
 ## Changes
 
