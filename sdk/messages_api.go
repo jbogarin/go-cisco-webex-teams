@@ -1,7 +1,9 @@
 package webexteams
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"strings"
 	"time"
 
@@ -19,21 +21,40 @@ type Attachment struct {
 	ContentType string                 `json:"contentType"`
 }
 
+// File is the struct used to define a file that needs to be sent. A file can either be a remote URI
+// or an io.Reader. If RemoteFileURI is set, it takes precedence over the Reader.
+type File struct {
+	Name          string    `json:"fileName,omitempty"`      // File Name.
+	Reader        io.Reader `json:"fileReader,omitempty"`    // File io.Reader.
+	ContentType   string    `json:"contentType,omitempty"`   // File Content Type.
+	RemoteFileURI string    `json:"remoteFileURI,omitempty"` // Remote file URI.
+}
+
 // MessageCreateRequest is the Create Message Request Parameters
 type MessageCreateRequest struct {
 	RoomID        string       `json:"roomId,omitempty"`        // Room ID.
+	ParentID      string       `json:"parentId,omitempty"`      // Parent ID
 	ToPersonID    string       `json:"toPersonId,omitempty"`    // Person ID (for type=direct).
 	ToPersonEmail string       `json:"toPersonEmail,omitempty"` // Person email (for type=direct).
 	Text          string       `json:"text,omitempty"`          // Message in plain text format.
 	Markdown      string       `json:"markdown,omitempty"`      // Message in markdown format.
-	Files         []string     `json:"files,omitempty"`         // File URL array.
-	Attachments   []Attachment `json:"attachments,omitempty"`   //Attachment Array
+	Files         []File       `json:"files,omitempty"`         // File URL array.
+	Attachments   []Attachment `json:"attachments,omitempty"`   // Attachment Array
+}
+
+// MessageEditRequest is the Edit Message Request Parameters
+type MessageEditRequest struct {
+	RoomID      string       `json:"roomId,omitempty"`      // Room ID.
+	Text        string       `json:"text,omitempty"`        // Message in plain text format.
+	Markdown    string       `json:"markdown,omitempty"`    // Message in markdown format.
+	Attachments []Attachment `json:"attachments,omitempty"` // Attachment Array
 }
 
 // Message is the Message definition
 type Message struct {
 	ID              string       `json:"id,omitempty"`              // Message ID.
 	RoomID          string       `json:"roomId,omitempty"`          // Room ID.
+	ParentID        string       `json:"parentId,omitempty"`        // Parent ID
 	RoomType        string       `json:"roomType,omitempty"`        // Room type (group or direct).
 	ToPersonID      string       `json:"toPersonId,omitempty"`      // Person ID (for type=direct).
 	ToPersonEmail   string       `json:"toPersonEmail,omitempty"`   // Person email (for type=direct).
@@ -107,11 +128,82 @@ func (s *MessagesService) CreateMessage(messageCreateRequest *MessageCreateReque
 
 	path := "/messages/"
 
-	response, err := s.client.R().
-		SetBody(messageCreateRequest).
+	responsePart := s.client.R()
+
+	if len(messageCreateRequest.Attachments) <= 0 {
+		if messageCreateRequest.RoomID != "" {
+			responsePart.SetMultipartFormData(map[string]string{"roomId": messageCreateRequest.RoomID})
+		}
+
+		if messageCreateRequest.ParentID != "" {
+			responsePart.SetMultipartFormData(map[string]string{"parentId": messageCreateRequest.ParentID})
+		}
+
+		if messageCreateRequest.Markdown != "" {
+			responsePart.SetMultipartFormData(map[string]string{"markdown": messageCreateRequest.Markdown})
+		}
+
+		if messageCreateRequest.Text != "" {
+			responsePart.SetMultipartFormData(map[string]string{"text": messageCreateRequest.Text})
+		}
+
+		if messageCreateRequest.ToPersonEmail != "" {
+			responsePart.SetMultipartFormData(map[string]string{"toPersonEmail": messageCreateRequest.ToPersonEmail})
+		}
+
+		if messageCreateRequest.ToPersonID != "" {
+			responsePart.SetMultipartFormData(map[string]string{"toPersonId": messageCreateRequest.ToPersonID})
+		}
+		if len(messageCreateRequest.Files) > 1 {
+			return nil, nil, errors.New("multi file attachment is not supported yet")
+		}
+
+		for _, fileToSend := range messageCreateRequest.Files {
+			if fileToSend.RemoteFileURI != "" {
+				responsePart.SetMultipartFormData(map[string]string{"files": fileToSend.RemoteFileURI})
+			} else if fileToSend.Reader != nil {
+				responsePart.SetMultipartField("files", fileToSend.Name, fileToSend.ContentType, fileToSend.Reader)
+			}
+		}
+	} else {
+		if len(messageCreateRequest.Files) > 0 {
+			return nil, nil, errors.New("sending files with attachment is not supported yet")
+		}
+		responsePart.SetBody(messageCreateRequest)
+	}
+
+	response, err := responsePart.
 		SetResult(&Message{}).
 		SetError(&Error{}).
 		Post(path)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	result := response.Result().(*Message)
+	return result, response, err
+
+}
+
+// EditMessage Puts a plain text or rich text message, and optionally, a media content attachment, to a room.
+/* Put a plain text or rich text message, and optionally, a media content attachment, to a room.
+The files parameter is an array, which accepts multiple values to allow for future expansion, but currently only one file may be included with the message.
+
+ @param messageID Message ID.
+ @param messageCreateRequest
+ @return Message
+*/
+func (s *MessagesService) EditMessage(messageID string, messageEditRequest *MessageEditRequest) (*Message, *resty.Response, error) {
+
+	path := "/messages/{messageId}"
+	path = strings.Replace(path, "{"+"messageId"+"}", fmt.Sprintf("%v", messageID), -1)
+
+	response, err := s.client.R().
+		SetBody(messageEditRequest).
+		SetResult(&Message{}).
+		SetError(&Error{}).
+		Put(path)
 
 	if err != nil {
 		return nil, nil, err
@@ -211,6 +303,56 @@ func (s *MessagesService) ListMessages(queryParams *ListMessagesQueryParams) (*M
 
 	result := response.Result().(*Messages)
 	if queryParams.Paginate {
+		items := s.messagesPagination(response.Header().Get("Link"), 0, 0)
+		for _, message := range items.Items {
+			result.AddMessage(message)
+		}
+	} else {
+		if len(result.Items) < queryParams.Max {
+			items := s.messagesPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
+			for _, message := range items.Items {
+				result.AddMessage(message)
+			}
+		}
+	}
+
+	return result, response, err
+
+}
+
+// DirectMessagesQueryParams are the query params for the ListMessages API Call
+type DirectMessagesQueryParams struct {
+	ParentID    string `url:"parentId,omitempty"`    // List messages with a parent, by ID.
+	PersonID    string `url:"personId,omitempty"`    // List messages in a 1:1 room, by person ID.
+	PersonEmail string `url:"personEmail,omitempty"` // List messages in a 1:1 room, by person email.
+	Max         int    `url:"max,omitempty"`         // Limit the maximum number of items in the response.
+	Paginate    bool   // Indicates if pagination is needed
+}
+
+// GetDirectMessages Lists all messages in a 1:1 (direct) room.
+/* Lists all messages in a 1:1 (direct) room.
+Use the personId or personEmail query parameter to specify the room.
+ @param parentId Parent Message ID.
+ @param personId Person ID.
+ @param personEmail Person Email.
+ @return a list of Messages
+*/
+func (s *MessagesService) GetDirectMessages(queryParams *DirectMessagesQueryParams) (*Messages, *resty.Response, error) {
+	path := "/messages/direct"
+
+	queryParamsString, _ := query.Values(queryParams)
+
+	response, err := s.client.R().
+		SetQueryString(queryParamsString.Encode()).
+		SetResult(&Messages{}).
+		Get(path)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	result := response.Result().(*Messages)
+	if queryParams.Paginate == true {
 		items := s.messagesPagination(response.Header().Get("Link"), 0, 0)
 		for _, message := range items.Items {
 			result.AddMessage(message)

@@ -16,21 +16,22 @@ type Client struct {
 	common service // Reuse a single struct instead of allocating one for each service on the heap.
 
 	// API Services
-	AdminAuditEvents *AdminAuditEventsService
-	Contents         *ContentsService
-	Events           *EventsService
-	Devices          *DevicesService
-	Licenses         *LicensesService
-	Memberships      *MembershipsService
-	Messages         *MessagesService
-	Organizations    *OrganizationsService
-	People           *PeopleService
-	Recordings       *RecordingsService
-	Roles            *RolesService
-	Rooms            *RoomsService
-	TeamMemberships  *TeamMembershipsService
-	Teams            *TeamsService
-	Webhooks         *WebhooksService
+	AdminAuditEvents  *AdminAuditEventsService
+	AttachmentActions *AttachmentActionsService
+	Contents          *ContentsService
+	Events            *EventsService
+	Devices           *DevicesService
+	Licenses          *LicensesService
+	Memberships       *MembershipsService
+	Messages          *MessagesService
+	Organizations     *OrganizationsService
+	People            *PeopleService
+	Recordings        *RecordingsService
+	Roles             *RolesService
+	Rooms             *RoomsService
+	TeamMemberships   *TeamMembershipsService
+	Teams             *TeamsService
+	Webhooks          *WebhooksService
 }
 
 type service struct {
@@ -55,6 +56,7 @@ func NewClient() *Client {
 
 	// API Services
 	c.AdminAuditEvents = (*AdminAuditEventsService)(&c.common)
+	c.AttachmentActions = (*AttachmentActionsService)(&c.common)
 	c.Contents = (*ContentsService)(&c.common)
 	c.Events = (*EventsService)(&c.common)
 	c.Devices = (*DevicesService)(&c.common)
