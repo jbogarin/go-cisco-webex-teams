@@ -20,16 +20,23 @@ type Recordings struct {
 
 // Recording is the Recording definition
 type Recording struct {
-	ID              string    `json:"id,omitempty"`              // A unique identifier for recording.
-	Topic           string    `json:"topic,omitempty"`           //The recording's topic.
-	CreateTime      time.Time `json:"createTime,omitempty"`      // The date and time recording was created in ISO 8601 compliant format.
-	DownloadURL     string    `json:"downloadUrl,omitempty"`     // The download link for recording.
-	PlaybackURL     string    `json:"playbackUrl,omitempty"`     // The playback link for recording.
-	Password        string    `json:"password,omitempty"`        // The recording's password.
-	Format          string    `json:"format,omitempty"`          // MP4 or ARF
-	DurationSeconds int       `json:"durationSeconds,omitempty"` // The duration of the recording, in seconds.
-	SizeBytes       int       `json:"sizeBytes,omitempty"`       // The size of the recording file, in bytes.
-	ShareToMe       bool      `json:"shareToMe,omitempty"`       // Whether or not the recording has been shared to the current user.
+	ID                 string    `json:"id,omitempty"`                 // A unique identifier for recording.
+	MeetingId          string    `json:"meetingId,omitempty"`          // Unique identifier for the parent ended meeting instance which the recording belongs to.
+	ScheduledMeetingId string    `json:"scheduledMeetingId,omitempty"` // Unique identifier for the parent scheduled meeting which the recording belongs to.
+	MeetingSeriesId    string    `json:"meetingSeriesId,omitempty"`    // Unique identifier for the parent meeting series which the recording belongs to.
+	Topic              string    `json:"topic,omitempty"`              // The recording's topic.
+	CreateTime         time.Time `json:"createTime,omitempty"`         // The date and time recording was created in ISO 8601 compliant format.
+	TimeRecorded       time.Time `json:"timeRecorded,omitempty"`       // The date and time recording started in ISO 8601 compliant format.
+	SiteUrl            string    `json:"siteUrl,omitempty"`            // The site URL for the recording.
+	DownloadURL        string    `json:"downloadUrl,omitempty"`        // The download link for recording.
+	PlaybackURL        string    `json:"playbackUrl,omitempty"`        // The playback link for recording.
+	Password           string    `json:"password,omitempty"`           // The recording's password.
+	Format             string    `json:"format,omitempty"`             // MP4 or ARF
+	ServiceType        string    `json:"serviceType,omitempty"`        // Record service type (MeetingCenter, EventCenter, SupportCenter or TrainingCenter).
+	DurationSeconds    int       `json:"durationSeconds,omitempty"`    // The duration of the recording, in seconds.
+	SizeBytes          int       `json:"sizeBytes,omitempty"`          // The size of the recording file, in bytes.
+	ShareToMe          bool      `json:"shareToMe,omitempty"`          // Whether or not the recording has been shared to the current user.
+	IntegrationTags    []string  `json:"integrationTags,omitempty"`    // External keys of the parent meeting created by an integration application.
 }
 
 // TemporaryDirectDownloadLinks definition
@@ -98,10 +105,17 @@ func (s *RecordingsService) recordingsPagination(linkHeader string, size, max in
 
 // ListRecordingsQueryParams are the query params for the ListRecordings API Call
 type ListRecordingsQueryParams struct {
-	From     string `url:"from,omitempty"` // Starting date and time (inclusive) for recordings to return, in any ISO 8601 compliant format. from cannot be after current date and time or after to.
-	To       string `url:"To,omitempty"`   // Ending date and time (exclusive) for List recordings to return, in any ISO 8601 compliant format. to cannot be after current date and time or before from.
-	Max      int    `url:"max,omitempty"`  // Limit the maximum number of items in the response.
-	Paginate bool   // Indicates if pagination is needed
+	From           string `url:"from,omitempty"`           // Starting date and time (inclusive) for recordings to return, in any ISO 8601 compliant format. from cannot be after current date and time or after to.
+	To             string `url:"To,omitempty"`             // Ending date and time (exclusive) for List recordings to return, in any ISO 8601 compliant format. to cannot be after current date and time or before from.
+	Max            int    `url:"max,omitempty"`            // Limit the maximum number of items in the response.
+	MeetingId      string `url:"meetingId,omitempty"`      // Unique identifier for the parent meeting series, scheduled meeting, or meeting instance for which recordings are being requested.
+	HostEmail      string `url:"hostEmail,omitempty"`      // Email address for the meeting host.
+	SiteUrl        string `url:"siteUrl,omitempty"`        // URL of the Webex site which the API lists recordings from.
+	IntegrationTag string `url:"integrationTag,omitempty"` // External key of the parent meeting created by an integration application.
+	Topic          string `url:"topic,omitempty"`          // Recording's topic.
+	Format         string `url:"format,omitempty"`         // Recoding's file format.
+	ServiceType    string `url:"serviceType,omitempty"`    // Recording's service-type.
+	Paginate       bool   // Indicates if pagination is needed
 }
 
 // ListRecordings List recordings.
@@ -112,6 +126,13 @@ Long result sets are split into pages.
  @param from (string) Starting date and time (inclusive) for recordings to return, in any ISO 8601 compliant format.
  @param to (string) Ending date and time (exclusive) for List recordings to return, in any ISO 8601 compliant format.
  @param max (int) limit the maximum number of items in the response.
+ @param meetingId (string) Unique identifier for the parent meeting series, scheduled meeting, or meeting instance.
+ @param hostEmail (string) Email address for the meeting host.
+ @param siteUrl (string) URL of the Webex site which the API lists recordings from.
+ @param integrationTag (string) External key of the parent meeting created by an integration application.
+ @param topic (string) Recording's topic.
+ @param format (string) Recoding's file format.
+ @param serviceType (string) Recording's service-type.
  @param paginate (bool) indicates if pagination is needed
  @return Recordings
 */

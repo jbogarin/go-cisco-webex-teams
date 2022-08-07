@@ -33,6 +33,7 @@ type TeamMembership struct {
 	PersonID          string    `json:"personId,omitempty"`          // Person ID.
 	PersonEmail       string    `json:"personEmail,omitempty"`       // Person email.
 	PersonDisplayName string    `json:"personDisplayName,omitempty"` // Person display name.
+	PersonOrgId       string    `json:"personOrgId,omitempty"`       // The organization ID of the person.
 	IsModerator       bool      `json:"isModerator,omitempty"`       // Team Membership is moderator.
 	Created           time.Time `json:"created,omitempty"`           // Team Membership creation date/time.
 }

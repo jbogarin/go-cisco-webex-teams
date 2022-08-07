@@ -65,9 +65,11 @@ type Message struct {
 	PersonID        string       `json:"personId,omitempty"`        // Person ID.
 	PersonEmail     string       `json:"personEmail,omitempty"`     // Person Email.
 	Created         time.Time    `json:"created,omitempty"`         // Message creation date/time.
+	Updated         time.Time    `json:"updated,omitempty"`         // Message update date/time.
 	MentionedPeople []string     `json:"mentionedPeople,omitempty"` // Person ID array.
 	MentionedGroups []string     `json:"mentionedGroups,omitempty"` // Groups array.
 	Attachments     []Attachment `json:"attachments,omitempty"`     // Attachment array
+	IsVoiceClip     bool         `json:"isVoiceClip,omitempty"`     // Message is voice clip
 }
 
 // Messages is the List of Messages

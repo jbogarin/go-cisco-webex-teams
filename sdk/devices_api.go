@@ -37,6 +37,8 @@ type Device struct {
 	ID               string   `json:"id,omitempty"`               // A unique identifier for the device.
 	DisplayName      string   `json:"displayName,omitempty"`      // A friendly name for the device.
 	PlaceID          string   `json:"placeId,omitempty"`          // The place associated with the device.
+	WorkspaceId      string   `json:"workspaceId,omitempty"`      // The workspace associated with the device.
+	PersonId         string   `json:"personId,omitempty"`         // The person associated with the device.
 	OrgID            string   `json:"orgId,omitempty"`            // The organization associated with the device.
 	Capabilities     []string `json:"capabilities,omitempty"`     // The capabilities of the device.
 	Permissions      []string `json:"permissions,omitempty"`      // The permissions the user has for this device. For example, xapi means this user is entitled to using the xapi against this device.
@@ -52,6 +54,7 @@ type Device struct {
 	PrimarySIPURL    string   `json:"primarySipUrl,omitempty"`    // The primary SIP address to dial this device.
 	SIPURLs          []string `json:"sipUrls,omitempty"`          // All SIP addresses to dial this device.
 	ErrorCodes       []string `json:"errorcodes,omitempty"`       // Device Error codes
+	Created          string   `json:"created,omitempty"`          // The date and time that the device was registered, in ISO8601 format.
 }
 
 // AddDevice is used to append a device to a slice of Devices

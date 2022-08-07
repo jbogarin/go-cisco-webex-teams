@@ -27,9 +27,14 @@ type Event struct {
 		ID          string `json:"id,omitempty"`          // Action ID.
 		RoomID      string `json:"roomId,omitempty"`      // Room ID where the event happened.
 		RoomType    string `json:"roomType,omitempty"`    // Room type where the event happened.
+		OrgID       string `json:"orgId,omitempty"`       // Room org ID where the event happened.
 		Text        string `json:"text,omitempty"`        // Text related to the event, in the case of a message.
 		PersonID    string `json:"personId,omitempty"`    // Person ID of the user who triggered the event.
 		PersonEmail string `json:"personEmail,omitempty"` // Person Email of the user who triggered the event.
+		MeetingId   string `json:"meetingId,omitempty"`   // Meeting ID if the event is a meeting.
+		CreatorId   string `json:"creatorId,omitempty"`   // Creator ID if the event is a meeting.
+		Host        string `json:"host,omitempty"`        // Host meeting data if the event is a meeting.
+		Attendees   string `json:"attendees,omitempty"`   // Meeting attendees if the event is a meeting.
 		Created     string `json:"created,omitempty"`     // The date and time of the event.
 		Type        string `json:"type,omitempty"`        // The type of event.
 	} `json:"data,omitempty"` // data

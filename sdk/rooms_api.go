@@ -15,8 +15,11 @@ type RoomsService service
 
 // RoomCreateRequest is the Room Create Request Parameters
 type RoomCreateRequest struct {
-	Title  string `json:"title,omitempty"`  // A user-friendly name for the room.
-	TeamID string `json:"teamId,omitempty"` // The ID for the team with which this room is associated.
+	Title              string `json:"title,omitempty"`              // A user-friendly name for the room.
+	TeamID             string `json:"teamId,omitempty"`             // The ID for the team with which this room is associated.
+	ClassificationId   string `json:"classificationId,omitempty"`   // The classificationId for the room.
+	IsLocked           bool   `json:"isLocked,omitempty"`           // Set the space as locked/moderated and the creator becomes a moderator.
+	IsAnnouncementOnly bool   `json:"isAnnouncementOnly,omitempty"` // Sets the space into Announcement Mode.
 }
 
 // RoomUpdateRequest is the Room Update Request Parameters
@@ -26,14 +29,18 @@ type RoomUpdateRequest struct {
 
 // Room is the Room definition
 type Room struct {
-	ID           string    `json:"id,omitempty"`           // Room ID.
-	Title        string    `json:"title,omitempty"`        // Room title.
-	RoomType     string    `json:"type,omitempty"`         // Room type (group or direct).
-	IsLocked     bool      `json:"isLocked,omitempty"`     // Room is moderated.
-	TeamID       string    `json:"teamId,omitempty"`       // Room Team ID.
-	CreatorID    string    `json:"creatorId,omitempty"`    // Room creator Person ID.
-	LastActivity time.Time `json:"lastActivity,omitempty"` // Room last activity date/time.
-	Created      time.Time `json:"created,omitempty"`      // Room creation date/time.
+	ID                 string    `json:"id,omitempty"`                 // Room ID.
+	Title              string    `json:"title,omitempty"`              // Room title.
+	RoomType           string    `json:"type,omitempty"`               // Room type (group or direct).
+	IsLocked           bool      `json:"isLocked,omitempty"`           // Room is moderated.
+	TeamID             string    `json:"teamId,omitempty"`             // Room Team ID.
+	CreatorID          string    `json:"creatorId,omitempty"`          // Room creator Person ID.
+	LastActivity       time.Time `json:"lastActivity,omitempty"`       // Room last activity date/time.
+	Created            time.Time `json:"created,omitempty"`            // Room creation date/time.
+	OwnerId            string    `json:"ownerId,omitempty"`            // The ID of the organization which owns this room.
+	ClassificationId   string    `json:"classificationId,omitempty"`   // Space classification id represents the space's current classification.
+	IsAnnouncementOnly bool      `json:"isAnnouncementOnly,omitempty"` // Indicates when a space is in Announcement Mode where only moderators can post messages
+	IsReadOnly         bool      `json:"isReadOnly,omitempty"`         // Indicates when a space is in Read Only Mode (direct space blocked by a compliance officer).
 }
 
 // Rooms is the List of Rooms
