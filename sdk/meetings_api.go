@@ -198,11 +198,11 @@ func (s *MeetingsService) GetMeeting(meetingID string) (*Meeting, *resty.Respons
 
 // ListMeetingsQueryParams are the query params for the ListMeetings API Call
 type ListMeetingsQueryParams struct {
-	RoomID          string    `url:"roomId,omitempty"`          // List meetings for a room, by ID.
-	MentionedPeople string    `url:"mentionedPeople,omitempty"` // List meetings where the caller is mentioned by specifying *me* or the caller personId.
-	Before          time.Time `url:"before,omitempty"`          // List meetings sent before a date and time, in ISO8601 format. Format: yyyy-MM-dd&#39;T&#39;HH:mm:ss.SSSZ
-	BeforeMeeting   string    `url:"beforeMeeting,omitempty"`   // List meetings sent before a meeting, by ID.
-	Max             int       `url:"max,omitempty"`             // Limit the maximum number of items in the response.
+	RoomID          string    `url:"roomId,omitempty"`                                   // List meetings for a room, by ID.
+	MentionedPeople string    `url:"mentionedPeople,omitempty"`                          // List meetings where the caller is mentioned by specifying *me* or the caller personId.
+	Before          time.Time `url:"before,omitempty" layout:"2006-01-02T15:04:05.005Z"` // List meetings sent before a date and time, in ISO8601 format. Format: yyyy-MM-dd&#39;T&#39;HH:mm:ss.SSSZ
+	BeforeMeeting   string    `url:"beforeMeeting,omitempty"`                            // List meetings sent before a meeting, by ID.
+	Max             int       `url:"max,omitempty"`                                      // Limit the maximum number of items in the response.
 	Paginate        bool      // Indicates if pagination is needed
 }
 

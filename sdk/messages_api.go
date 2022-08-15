@@ -264,11 +264,11 @@ func (s *MessagesService) GetMessage(messageID string) (*Message, *resty.Respons
 
 // ListMessagesQueryParams are the query params for the ListMessages API Call
 type ListMessagesQueryParams struct {
-	RoomID          string    `url:"roomId,omitempty"`          // List messages for a room, by ID.
-	MentionedPeople string    `url:"mentionedPeople,omitempty"` // List messages where the caller is mentioned by specifying *me* or the caller personId.
-	Before          time.Time `url:"before,omitempty"`          // List messages sent before a date and time, in ISO8601 format. Format: yyyy-MM-dd&#39;T&#39;HH:mm:ss.SSSZ
-	BeforeMessage   string    `url:"beforeMessage,omitempty"`   // List messages sent before a message, by ID.
-	Max             int       `url:"max,omitempty"`             // Limit the maximum number of items in the response.
+	RoomID          string    `url:"roomId,omitempty"`                                   // List messages for a room, by ID.
+	MentionedPeople string    `url:"mentionedPeople,omitempty"`                          // List messages where the caller is mentioned by specifying *me* or the caller personId.
+	Before          time.Time `url:"before,omitempty" layout:"2006-01-02T15:04:05.005Z"` // List messages sent before a date and time, in ISO8601 format. Format: yyyy-MM-dd&#39;T&#39;HH:mm:ss.SSSZ
+	BeforeMessage   string    `url:"beforeMessage,omitempty"`                            // List messages sent before a message, by ID.
+	Max             int       `url:"max,omitempty"`                                      // Limit the maximum number of items in the response.
 	Paginate        bool      // Indicates if pagination is needed
 }
 
