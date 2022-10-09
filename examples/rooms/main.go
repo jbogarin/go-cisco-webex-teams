@@ -34,9 +34,9 @@ func main() {
 
 	// GET rooms
 	roomsQueryParams := &webexteams.ListRoomsQueryParams{
-		Max:      2000,
-		TeamID:   "",
-		Paginate: false,
+		Max:       -1, // list all the rooms
+		TeamID:    "",
+		RequestBy: 200, // list rooms 200 by 200
 	}
 
 	rooms, _, err := Client.Rooms.ListRooms(roomsQueryParams)

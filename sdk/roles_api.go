@@ -44,15 +44,8 @@ func (s *RolesService) rolesPagination(linkHeader string, size, max int) *Roles 
 				return nil
 			}
 			items = response.Result().(*Roles)
-			if size != 0 {
-				size = size + len(items.Items)
-				if size < max {
-					roles := s.rolesPagination(response.Header().Get("Link"), size, max)
-					for _, role := range roles.Items {
-						items.AddRole(role)
-					}
-				}
-			} else {
+			size = size + len(items.Items)
+			if max < 0 || size < max {
 				roles := s.rolesPagination(response.Header().Get("Link"), size, max)
 				for _, role := range roles.Items {
 					items.AddRole(role)
@@ -93,19 +86,27 @@ func (s *RolesService) GetRole(roleID string) (*Role, *resty.Response, error) {
 
 // RolesListQueryParams are the query params for the GetRoles API Call
 type RolesListQueryParams struct {
-	Max      int  `url:"max,omitempty"` // Limit the maximum number of items in the response.
-	Paginate bool // Indicates if pagination is needed
+	Max       int `url:"max,omitempty"` // Limit the maximum number of items in the response. Negative value will list all items (use this carefully).
+	RequestBy int `url:"-"`             // Number of items to retrieve by requests (Max if let at 0)
 }
 
 // ListRoles List all roles.
 /* List all roles.
-@param "max" (int) Limit the maximum number of items in the response.
-@param paginate (bool) indicates if pagination is needed
+@param "max" (int) Limit the maximum number of items in the response. Negative value will list all items (use this carefully).
+@param "requestBy" (int) Number of items by request
 @return Roles
 */
 func (s *RolesService) ListRoles(queryParams *RolesListQueryParams) (*Roles, *resty.Response, error) {
 
 	path := "/roles/"
+
+	max := queryParams.Max
+
+	if queryParams.RequestBy > 0 {
+		queryParams.Max = queryParams.RequestBy
+	} else if queryParams.Max < 0 {
+		queryParams.Max = 0
+	}
 
 	queryParamsString, _ := query.Values(queryParams)
 
@@ -120,19 +121,14 @@ func (s *RolesService) ListRoles(queryParams *RolesListQueryParams) (*Roles, *re
 	}
 
 	result := response.Result().(*Roles)
-	if queryParams.Paginate {
-		items := s.rolesPagination(response.Header().Get("Link"), 0, 0)
+
+	if max < 0 || len(result.Items) < max {
+		items := s.rolesPagination(response.Header().Get("Link"), len(result.Items), max)
 		for _, role := range items.Items {
 			result.AddRole(role)
 		}
-	} else {
-		if len(result.Items) < queryParams.Max {
-			items := s.rolesPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
-			for _, role := range items.Items {
-				result.AddRole(role)
-			}
-		}
 	}
+
 	return result, response, err
 
 }
