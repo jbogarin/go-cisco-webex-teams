@@ -69,15 +69,8 @@ func (s *MembershipsService) membershipsPagination(linkHeader string, size, max 
 				return nil
 			}
 			items = response.Result().(*Memberships)
-			if size != 0 {
-				size = size + len(items.Items)
-				if size < max {
-					memberships := s.membershipsPagination(response.Header().Get("Link"), size, max)
-					for _, membership := range memberships.Items {
-						items.AddMembership(membership)
-					}
-				}
-			} else {
+			size = size + len(items.Items)
+			if max < 0 || size < max {
 				memberships := s.membershipsPagination(response.Header().Get("Link"), size, max)
 				for _, membership := range memberships.Items {
 					items.AddMembership(membership)
@@ -169,8 +162,8 @@ type ListMembershipsQueryParams struct {
 	RoomID      string `url:"roomId,omitempty"`      // Room ID.
 	PersonID    string `url:"personId,omitempty"`    // Person ID.
 	PersonEmail string `url:"personEmail,omitempty"` // Person email.
-	Max         int    `url:"max,omitempty"`         // Limit the maximum number of items in the response.
-	Paginate    bool   // Indicates if pagination is needed
+	Max         int    `url:"max,omitempty"`         // Limit the maximum number of items in the response. Negative value will list all items (use this carefully).
+	RequestBy   int    `url:"-"`                     // Number of items to retrieve by requests (Max if let at 0)
 }
 
 // ListMemberships Lists all membership memberships. By default, lists memberships for Memberships to which the authenticated user belongs.
@@ -183,13 +176,21 @@ Long result sets will be split into pages.
  @param "roomId" (string) Room ID.
  @param "personId" (string) Person ID.
  @param "personEmail" (string) Person email.
- @param "max" (int) Limit the maximum number of items in the response.
- @param "paginate" (bool) Indicates if pagination is needed
+ @param "max" (int) Limit the maximum number of items in the response. Negative value will list all items (use this carefully).
+ @param "requestBy" (int) Number of items by request
  @return Memberships
 */
 func (s *MembershipsService) ListMemberships(queryParams *ListMembershipsQueryParams) (*Memberships, *resty.Response, error) {
 
 	path := "/memberships/"
+
+	max := queryParams.Max
+
+	if queryParams.RequestBy > 0 {
+		queryParams.Max = queryParams.RequestBy
+	} else if queryParams.Max < 0 {
+		queryParams.Max = 0
+	}
 
 	queryParamsString, _ := query.Values(queryParams)
 
@@ -204,17 +205,11 @@ func (s *MembershipsService) ListMemberships(queryParams *ListMembershipsQueryPa
 	}
 
 	result := response.Result().(*Memberships)
-	if queryParams.Paginate {
-		items := s.membershipsPagination(response.Header().Get("Link"), 0, 0)
+
+	if max < 0 || len(result.Items) < max {
+		items := s.membershipsPagination(response.Header().Get("Link"), len(result.Items), max)
 		for _, membership := range items.Items {
 			result.AddMembership(membership)
-		}
-	} else {
-		if len(result.Items) < queryParams.Max {
-			items := s.membershipsPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
-			for _, membership := range items.Items {
-				result.AddMembership(membership)
-			}
 		}
 	}
 

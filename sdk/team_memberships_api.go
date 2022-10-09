@@ -63,21 +63,13 @@ func (s *TeamMembershipsService) teamMembershipsPagination(linkHeader string, si
 				return nil
 			}
 			items = response.Result().(*TeamMemberships)
-			if size != 0 {
-				size = size + len(items.Items)
-				if size < max {
-					teamMemberships := s.teamMembershipsPagination(response.Header().Get("Link"), size, max)
-					for _, teamMembership := range teamMemberships.Items {
-						items.AddTeamMembership(teamMembership)
-					}
-				}
-			} else {
+			size = size + len(items.Items)
+			if max < 0 || size < max {
 				teamMemberships := s.teamMembershipsPagination(response.Header().Get("Link"), size, max)
 				for _, teamMembership := range teamMemberships.Items {
 					items.AddTeamMembership(teamMembership)
 				}
 			}
-
 		}
 	}
 
@@ -160,9 +152,9 @@ func (s *TeamMembershipsService) GetTeamMembership(membershipID string) (*TeamMe
 
 // ListTeamMemberhipsQueryParams are the query params for the ListTeamMemberhips API Call
 type ListTeamMemberhipsQueryParams struct {
-	TeamID   string `url:"teamId,omitempty"` // Team ID.
-	Max      int    `url:"max,omitempty"`    // Limit the maximum number of items in the response.
-	Paginate bool   // Indicates if pagination is needed
+	TeamID    string `url:"teamId,omitempty"` // Team ID.
+	Max       int    `url:"max,omitempty"`    // Limit the maximum number of items in the response. Negative value will list all items (use this carefully).
+	RequestBy int    `url:"-"`                // Number of items to retrieve by requests (Max if let at 0)
 }
 
 // ListTeamMemberhips Lists all team memberships for a given team, specified by the teamID query parameter.
@@ -170,13 +162,21 @@ type ListTeamMemberhipsQueryParams struct {
 Use query parameters to filter the response.
 
  @param teamID Team ID.
- @param "max" (int) Limit the maximum number of items in the response.
- @param paginate (bool) indicates if pagination is needed
+ @param "max" (int) Limit the maximum number of items in the response. Negative value will list all items (use this carefully).
+ @param "requestBy" (int) Number of items by request
  @return TeamMemberships
 */
 func (s *TeamMembershipsService) ListTeamMemberhips(queryParams *ListTeamMemberhipsQueryParams) (*TeamMemberships, *resty.Response, error) {
 
 	path := "/team/memberships/"
+
+	max := queryParams.Max
+
+	if queryParams.RequestBy > 0 {
+		queryParams.Max = queryParams.RequestBy
+	} else if queryParams.Max < 0 {
+		queryParams.Max = 0
+	}
 
 	queryParamsString, _ := query.Values(queryParams)
 
@@ -191,17 +191,11 @@ func (s *TeamMembershipsService) ListTeamMemberhips(queryParams *ListTeamMemberh
 	}
 
 	result := response.Result().(*TeamMemberships)
-	if queryParams.Paginate {
-		items := s.teamMembershipsPagination(response.Header().Get("Link"), 0, 0)
+
+	if max < 0 || len(result.Items) < max {
+		items := s.teamMembershipsPagination(response.Header().Get("Link"), len(result.Items), max)
 		for _, teamMembership := range items.Items {
 			result.AddTeamMembership(teamMembership)
-		}
-	} else {
-		if len(result.Items) < queryParams.Max {
-			items := s.teamMembershipsPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
-			for _, teamMembership := range items.Items {
-				result.AddTeamMembership(teamMembership)
-			}
 		}
 	}
 	return result, response, err

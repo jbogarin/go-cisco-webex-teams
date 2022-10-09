@@ -46,15 +46,8 @@ func (s *LicensesService) licensesPagination(linkHeader string, size, max int) *
 				return nil
 			}
 			items = response.Result().(*Licenses)
-			if size != 0 {
-				size = size + len(items.Items)
-				if size < max {
-					licenses := s.licensesPagination(response.Header().Get("Link"), size, max)
-					for _, license := range licenses.Items {
-						items.AddLicense(license)
-					}
-				}
-			} else {
+			size = size + len(items.Items)
+			if max < 0 || size < max {
 				licenses := s.licensesPagination(response.Header().Get("Link"), size, max)
 				for _, license := range licenses.Items {
 					items.AddLicense(license)
@@ -95,21 +88,29 @@ func (s *LicensesService) GetLicense(licenseID string) (*License, *resty.Respons
 
 // ListLicensesQueryParams are the query params for the ListLicenses API Call
 type ListLicensesQueryParams struct {
-	Max      int  `url:"max,omitempty"` // Limit the maximum number of items in the response.
-	Paginate bool // Indicates if pagination is needed
+	Max       int `url:"max,omitempty"` // Limit the maximum number of items in the response. Negative value will list all items (use this carefully).
+	RequestBy int `url:"-"`             // number of item to retrieve by requests (Max if let at 0)
 }
 
 // ListLicenses List all licenses for a given organization.
 /* List all licenses for a given organization.
 If no orgID is specified, the default is the organization of the authenticated user.
 
- @param "max" (int) Limit the maximum number of items in the response.
- @param paginate (bool) indicates if pagination is needed
+ @param "max" (int) Limit the maximum number of items in the response. Negative value will list all items (use this carefully).
+ @param "requestBy" (int) Number of items by request
  @return Licenses
 */
 func (s *LicensesService) ListLicenses(queryParams *ListLicensesQueryParams) (*Licenses, *resty.Response, error) {
 
 	path := "/licenses/"
+
+	max := queryParams.Max
+
+	if queryParams.RequestBy > 0 {
+		queryParams.Max = queryParams.RequestBy
+	} else if queryParams.Max < 0 {
+		queryParams.Max = 0
+	}
 
 	queryParamsString, _ := query.Values(queryParams)
 
@@ -124,17 +125,11 @@ func (s *LicensesService) ListLicenses(queryParams *ListLicensesQueryParams) (*L
 	}
 
 	result := response.Result().(*Licenses)
-	if queryParams.Paginate {
-		items := s.licensesPagination(response.Header().Get("Link"), 0, 0)
+
+	if max < 0 || len(result.Items) < max {
+		items := s.licensesPagination(response.Header().Get("Link"), len(result.Items), max)
 		for _, license := range items.Items {
 			result.AddLicense(license)
-		}
-	} else {
-		if len(result.Items) < queryParams.Max {
-			items := s.licensesPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
-			for _, license := range items.Items {
-				result.AddLicense(license)
-			}
 		}
 	}
 	return result, response, err

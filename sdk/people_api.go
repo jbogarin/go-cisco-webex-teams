@@ -10,6 +10,8 @@ import (
 	"github.com/peterhellberg/link"
 )
 
+const MaxPeopleByQuery = 1000
+
 // PeopleService is the service to communicate with the People API endpoint
 type PeopleService service
 
@@ -89,7 +91,7 @@ func (s *PeopleService) peoplePagination(linkHeader string, size, max int) *Peop
 			items = response.Result().(*People)
 			if size != 0 {
 				size = size + len(items.Items)
-				if size < max {
+				if max < 0 || size < max {
 					people := s.peoplePagination(response.Header().Get("Link"), size, max)
 					for _, person := range people.Items {
 						items.AddPerson(person)
@@ -211,9 +213,9 @@ type ListPeopleQueryParams struct {
 	ID          string `url:"id,omitempty"`          // List people by ID. Accepts up to 85 person IDs separated by commas.
 	Email       string `url:"email,omitempty"`       // List people with this email address. For non-admin requests, either this or displayName are required.
 	DisplayName string `url:"displayName,omitempty"` // List people whose name starts with this string. For non-admin requests, either this or email are required.
-	Max         int    `url:"max,omitempty"`         // Limit the maximum number of items in the response.
+	Max         int    `url:"max,omitempty"`         // Limit the maximum number of items in the response. Negative value will list all items (use this carefully).
 	OrgID       string `url:"orgId,omitempty"`       // List people in this organization. Only admin users of another organization (such as partners) may use this parameter.
-	Paginate    bool   // Indicates if pagination is needed
+	RequestBy   int    `url:"-"`                     // Number of items to retrieve by request
 }
 
 // ListPeople List people in your organization.
@@ -223,14 +225,23 @@ Admin users can omit these fields and list all users in their organization.
  @param "id" (string) List people by ID. Accepts up to 85 person IDs separated by commas.
  @param "email" (string) List people with this email address. For non-admin requests, either this or displayName are required.
  @param "displayName" (string) List people whose name starts with this string. For non-admin requests, either this or email are required.
- @param "max" (int) Limit the maximum number of items in the response.
+ @param "max" (int) Limit the maximum number of items in the response. Negative value will list all items (use this carefully).
  @param "orgId" (string) List people in this organization. Only admin users of another organization (such as partners) may use this parameter.
- @param paginate (bool) indicates if pagination is needed
+ @param "requestBy" (int)
  @return People
 */
 func (s *PeopleService) ListPeople(queryParams *ListPeopleQueryParams) (*People, *resty.Response, error) {
 
-	path := "/people/"
+	path := "/people"
+	max := queryParams.Max
+
+	if queryParams.RequestBy > 0 {
+		queryParams.Max = queryParams.RequestBy
+	} else if max > MaxPeopleByQuery {
+		queryParams.Max = MaxPeopleByQuery
+	} else if max < 0 {
+		queryParams.Max = 0
+	}
 
 	queryParamsString, _ := query.Values(queryParams)
 
@@ -245,17 +256,10 @@ func (s *PeopleService) ListPeople(queryParams *ListPeopleQueryParams) (*People,
 	}
 
 	result := response.Result().(*People)
-	if queryParams.Paginate {
-		items := s.peoplePagination(response.Header().Get("Link"), 0, 0)
+	if max < 0 || len(result.Items) < max {
+		items := s.peoplePagination(response.Header().Get("Link"), len(result.Items), max)
 		for _, person := range items.Items {
 			result.AddPerson(person)
-		}
-	} else {
-		if len(result.Items) < queryParams.Max {
-			items := s.peoplePagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
-			for _, person := range items.Items {
-				result.AddPerson(person)
-			}
 		}
 	}
 	return result, response, err

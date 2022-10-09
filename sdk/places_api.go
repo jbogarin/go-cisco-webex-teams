@@ -62,15 +62,8 @@ func (s *PlacesService) placesPagination(linkHeader string, size, max int) *Plac
 				return nil
 			}
 			items = response.Result().(*Places)
-			if size != 0 {
-				size = size + len(items.Items)
-				if size < max {
-					places := s.placesPagination(response.Header().Get("Link"), size, max)
-					for _, place := range places.Items {
-						items.AddPlace(place)
-					}
-				}
-			} else {
+			size = size + len(items.Items)
+			if max < 0 || size < max {
 				places := s.placesPagination(response.Header().Get("Link"), size, max)
 				for _, place := range places.Items {
 					items.AddPlace(place)
@@ -165,8 +158,8 @@ type ListPlacesQueryParams struct {
 	TeamID    string `url:"teamId,omitempty"` // Limit the places to those associated with a team, by ID.
 	PlaceType string `url:"type,omitempty"`   // direct returns all 1-to-1 places. group returns all group places.
 	SortBy    string `url:"sortBy,omitempty"` // Sort results by place ID (id), most recent activity (lastactivity), or most recently created (created).
-	Max       int    `url:"max,omitempty"`    // Limit the maximum number of items in the response.
-	Paginate  bool   // Indicates if pagination is needed
+	Max       int    `url:"max,omitempty"`    // Limit the maximum number of items in the response. Negative value will list all items (use this carefully).
+	RequestBy int    `url:"-"`                // Number of items to retrieve by requests (Max if let at 0)
 }
 
 // ListPlaces List places.
@@ -178,13 +171,21 @@ Long result sets will be split into pages.
  @param "teamId" (string) Limit the places to those associated with a team, by ID.
  @param "type_" (string) direct returns all 1-to-1 places. group returns all group places.
  @param "sortBy" (string) Sort results by place ID (id), most recent activity (lastactivity), or most recently created (created).
- @param "max" (int) Limit the maximum number of items in the response.
- @param paginate (bool) indicates if pagination is needed
+ @param "max" (int) Limit the maximum number of items in the response. Negative value will list all items (use this carefully).
+ @param "requestBy" (int) Number of items by request
  @return Places
 */
 func (s *PlacesService) ListPlaces(queryParams *ListPlacesQueryParams) (*Places, *resty.Response, error) {
 
 	path := "/places/"
+
+	max := queryParams.Max
+
+	if queryParams.RequestBy > 0 {
+		queryParams.Max = queryParams.RequestBy
+	} else if queryParams.Max < 0 {
+		queryParams.Max = 0
+	}
 
 	queryParamsString, _ := query.Values(queryParams)
 
@@ -198,17 +199,11 @@ func (s *PlacesService) ListPlaces(queryParams *ListPlacesQueryParams) (*Places,
 	}
 
 	result := response.Result().(*Places)
-	if queryParams.Paginate {
-		items := s.placesPagination(response.Header().Get("Link"), 0, 0)
+
+	if max < 0 || len(result.Items) < max {
+		items := s.placesPagination(response.Header().Get("Link"), len(result.Items), max)
 		for _, place := range items.Items {
 			result.AddPlace(place)
-		}
-	} else {
-		if len(result.Items) < queryParams.Max {
-			items := s.placesPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
-			for _, place := range items.Items {
-				result.AddPlace(place)
-			}
 		}
 	}
 

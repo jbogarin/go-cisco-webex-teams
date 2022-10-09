@@ -46,15 +46,8 @@ func (s *OrganizationsService) organizationsPagination(linkHeader string, size, 
 				return nil
 			}
 			items = response.Result().(*Organizations)
-			if size != 0 {
-				size = size + len(items.Items)
-				if size < max {
-					organizations := s.organizationsPagination(response.Header().Get("Link"), size, max)
-					for _, organization := range organizations.Items {
-						items.AddOrganization(organization)
-					}
-				}
-			} else {
+			size = size + len(items.Items)
+			if max < 0 || size < max {
 				organizations := s.organizationsPagination(response.Header().Get("Link"), size, max)
 				for _, organization := range organizations.Items {
 					items.AddOrganization(organization)
@@ -95,19 +88,27 @@ func (s *OrganizationsService) GetOrganization(orgID string) (*Organization, *re
 
 // ListOrganizationsQueryParams are the query params for the ListOrganizations API Call
 type ListOrganizationsQueryParams struct {
-	Max      int  `url:"max,omitempty"` // Limit the maximum number of items in the response.
-	Paginate bool // Indicates if pagination is needed
+	Max       int `url:"max,omitempty"` // Limit the maximum number of items in the response. Negative value will list all items (use this carefully).
+	RequestBy int `url:"-"`             // Number of items to retrieve by requests (Max if let at 0)
 }
 
 // ListOrganizations List all organizations visible by your account. The results will not be paginated.
 /* List all organizations visible by your account. The results will not be paginated.
-@param "max" (int) Limit the maximum number of items in the response.
-@param paginate (bool) indicates if pagination is needed
+@param "max" (int) Limit the maximum number of items in the response. Negative value will list all items (use this carefully).
+@param "requestBy" (int) Number of items by request
 @return Organizations
 */
 func (s *OrganizationsService) ListOrganizations(queryParams *ListOrganizationsQueryParams) (*Organizations, *resty.Response, error) {
 
 	path := "/organizations/"
+
+	max := queryParams.Max
+
+	if queryParams.RequestBy > 0 {
+		queryParams.Max = queryParams.RequestBy
+	} else if queryParams.Max < 0 {
+		queryParams.Max = 0
+	}
 
 	queryParamsString, _ := query.Values(queryParams)
 
@@ -122,17 +123,11 @@ func (s *OrganizationsService) ListOrganizations(queryParams *ListOrganizationsQ
 	}
 
 	result := response.Result().(*Organizations)
-	if queryParams.Paginate {
-		items := s.organizationsPagination(response.Header().Get("Link"), 0, 0)
+
+	if max < 0 || len(result.Items) < max {
+		items := s.organizationsPagination(response.Header().Get("Link"), len(result.Items), max)
 		for _, organization := range items.Items {
 			result.AddOrganization(organization)
-		}
-	} else {
-		if len(result.Items) < queryParams.Max {
-			items := s.organizationsPagination(response.Header().Get("Link"), len(result.Items), queryParams.Max)
-			for _, organization := range items.Items {
-				result.AddOrganization(organization)
-			}
 		}
 	}
 	return result, response, err
